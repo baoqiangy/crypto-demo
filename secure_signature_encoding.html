@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why Secure Signatures Must Bind Messages to Properly Checked Encodings</title>
+<style>
+:root{color-scheme:light;--ink:#19283b;--muted:#506075;--blue:#2358a5;--line:#d9e3ed;--bg:#f5f8fc;--green:#ddf1e5;--cream:#fff2d9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:16px/1.72 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--ink)}main{max-width:910px;margin:38px auto 70px;background:white;padding:48px 58px;border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 32px #1d33500a}h1{font-size:2.25rem;line-height:1.17;letter-spacing:-.035em;margin:0 0 14px}h2{font-size:1.45rem;margin:40px 0 12px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:9px}h3{font-size:1.1rem;margin:24px 0 10px}p{margin:12px 0}blockquote{margin:22px 0;padding:16px 20px;border-left:4px solid var(--blue);background:#f0f5fc;font-weight:600}ul,ol{padding-left:26px}li{margin:5px 0}strong{font-weight:700}code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-size:.94em}pre{background:#f1f5f9;border:1px solid #dbe4ed;border-radius:10px;padding:19px;overflow:auto;font-size:.95rem;line-height:1.45}figure{margin:26px 0;padding:18px;border:1px solid var(--line);border-radius:12px;background:#fbfdff}figcaption{font-size:.85rem;color:var(--muted);margin:10px 3px 0}.equation{overflow-x:auto;text-align:center;padding:12px;margin:15px 0;background:#f8fafc;border-radius:8px;font-family:Cambria,'Times New Roman',serif;font-size:1.22em;white-space:nowrap}.note{padding:15px 19px;background:#f4f9f5;border-left:4px solid #478b64;margin:20px 0}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{border:1px solid var(--line);padding:12px;text-align:left;vertical-align:top}th{background:#edf3f9}tr:nth-child(even) td{background:#fafcfe}.subtitle{color:var(--muted);font-size:1.1rem}footer{color:var(--muted);border-top:1px solid var(--line);padding-top:14px;margin-top:40px;font-size:.86rem}.small{font-size:.9em}.mathsup{font-size:.7em;vertical-align:super}@media(max-width:650px){main{margin:0;padding:24px 18px;border:0;border-radius:0}h1{font-size:1.85rem}h2{font-size:1.25rem}.equation{font-size:1.05em}figure{padding:8px}}@media print{body{background:white}main{margin:0;max-width:none;padding:10mm;border:0;box-shadow:none}h2,figure{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<h1>Why Secure Signatures Must Bind Messages to Properly Checked Encodings</h1>
+<p class="subtitle">An explanation using textbook RSA, existential forgery, strict encoding verification, and RSA-PSS.</p>
+<blockquote>“A secure signature scheme must bind the message to a properly checked encoding.”</blockquote>
+<p>This means a digital signature must be cryptographically tied not only to the message being signed, but also to an <strong>unambiguous, correctly structured representation</strong> of that message. The verifier must check that structure carefully before accepting the signature.</p>
+<p>This is particularly important for RSA digital signatures, because RSA's mathematical operation alone does not guarantee signature security.</p>
+
+<h2>1. Why is message encoding necessary?</h2>
+<p>Consider textbook RSA signatures. Let:</p>
+<ul><li><em>n = pq</em>: RSA modulus</li><li><em>e</em>: public exponent</li><li><em>d</em>: private exponent</li><li><em>m</em>: message represented as an integer</li></ul>
+<p>The signer computes:</p><div class="equation">s = m<sup>d</sup> mod n</div>
+<p>The verifier checks:</p><div class="equation">s<sup>e</sup> mod n =? m</div>
+<p>This looks reasonable, but it is insecure.</p>
+<h3>Example: Existential forgery against textbook RSA</h3>
+<p>An attacker who knows only the public key (<em>n, e</em>) can:</p>
+<ol><li>Choose an arbitrary integer <em>s</em>.</li><li>Compute <em>m = s<sup>e</sup> mod n</em>.</li><li>Announce (<em>m, s</em>) as a valid message-signature pair.</li></ol>
+<p>Verification succeeds automatically because:</p><div class="equation">s<sup>e</sup> mod n = m</div>
+<p>The attacker never needed the private key.</p>
+<div class="note"><strong>The problem:</strong> Textbook RSA accepts any mathematical value in the appropriate range as a valid message representative. It doesn't distinguish a properly formatted message from an arbitrary integer.</div>
+
+<h2>2. What does “bind the message to an encoding” mean?</h2>
+<p>Instead of signing the raw integer <em>m</em>, a secure scheme first transforms the message <em>M</em> into an encoded representation:</p>
+<div class="equation">EM = Encode(M)</div>
+<p>For RSA, the signature operation then applies the RSA private exponent to a representative derived from that encoding:</p>
+<div class="equation">s = OS2IP(EM)<sup>d</sup> mod n</div>
+<p>Here, <code>OS2IP</code> converts the encoded byte string into an integer. The encoding should incorporate a cryptographic hash of the message and any other values or structure required by the signature scheme.</p>
+<figure>
+<div style="font-weight:650;margin:0 0 8px">Signing and verification flow (original diagram)</div>
+<svg viewBox="0 0 340 224" role="img" aria-labelledby="figtitle figdesc" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:600px;display:block;margin:auto">
+<title id="figtitle">Signing and verification flow</title><desc id="figdesc">Message M flows through Encode(M) into RSA Sign. The signature flows into RSA Verify and then Check encoding; the resulting encoding is compared with the encoding derived from message M.</desc>
+<rect x="10" y="15" width="132" height="37" rx="7" fill="#E5EDF9" stroke="#788895" stroke-width=".7"/><text x="76" y="38" text-anchor="middle" font-size="12" fill="#1D2937">Message M</text>
+<rect x="10" y="75" width="132" height="37" rx="7" fill="#DDEFE6" stroke="#788895" stroke-width=".7"/><text x="76" y="98" text-anchor="middle" font-size="12" fill="#1D2937">Encode(M)</text>
+<rect x="10" y="135" width="132" height="37" rx="7" fill="#DDEFE6" stroke="#788895" stroke-width=".7"/><text x="76" y="158" text-anchor="middle" font-size="12" fill="#1D2937">RSA Sign</text>
+<rect x="198" y="135" width="132" height="37" rx="7" fill="#E5EDF9" stroke="#788895" stroke-width=".7"/><text x="264" y="158" text-anchor="middle" font-size="12" fill="#1D2937">RSA Verify</text>
+<rect x="198" y="75" width="132" height="37" rx="7" fill="#F8E9C8" stroke="#788895" stroke-width=".7"/><text x="264" y="98" text-anchor="middle" font-size="12" fill="#1D2937">Check encoding</text>
+<g stroke="#43576c" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M76 52 V75 M72 70 L76 75 L80 70"/><path d="M76 112 V135 M72 130 L76 135 L80 130"/><path d="M142 153 H198 M193 149 L198 153 L193 157"/><path d="M264 135 V112 M260 117 L264 112 L268 117"/><path d="M264 75 V36 H142 M147 32 L142 36 L147 40" stroke-dasharray="4 3"/></g>
+<text x="170" y="135" font-size="10" fill="#43576c" text-anchor="middle">Signature</text>
+<text x="264" y="199" font-size="11" text-anchor="middle" fill="#43576c">Compare with encoding</text><text x="264" y="213" font-size="11" text-anchor="middle" fill="#43576c">derived from M</text>
+</svg>
+<figcaption>Conceptual RSA signing flow: the verifier checks that the recovered encoded representation matches the expected encoding of the supplied message. The diagram is embedded as scalable SVG, not a raster screenshot.</figcaption>
+</figure>
+<p><strong>Binding</strong> means that the encoding has a strong cryptographic relationship with the exact message being verified.</p>
+<p>For example, when the encoding includes:</p><div class="equation">H(M) = SHA256(M)</div>
+<p>Changing even one bit of <em>M</em> will, with overwhelming probability, produce a different hash and therefore a different expected encoding. This prevents an attacker from taking a valid signature on one message and using it to authenticate a different message.</p>
+
+<h2>3. Why must the encoding be properly checked?</h2>
+<p>Even if a signature scheme uses hashing and padding, verification can still be vulnerable if the verifier accepts malformed encodings.</p>
+<p>Consider a simplified encoded message:</p>
+<pre>+----------+------------+------------------+-----------+
+| Header   | Padding    | SHA-256(M)       | Trailer   |
++----------+------------+------------------+-----------+</pre>
+<p>A secure verifier must ensure that the <strong>entire encoding is valid</strong>, not merely that the expected message hash appears somewhere in the recovered data.</p>
+<p>For example, suppose a verifier:</p><ol><li>Computes <em>v = s<sup>e</sup> mod n</em>.</li><li>Converts <em>v</em> into a byte string.</li><li>Searches the byte string for <em>SHA256(M)</em>.</li><li>Accepts if the hash is found, ignoring other malformed bytes.</li></ol>
+<p>This is dangerous. An attacker might construct a signature whose RSA verification output contains the expected hash but does not satisfy the signature scheme's required encoding. The verifier could then accept a signature that the legitimate signing algorithm would never have produced.</p>
+<p>This is the principle behind certain <strong>RSA signature forgery attacks involving lax PKCS#1 v1.5 verification</strong>, especially implementations using the small public exponent <em>e = 3</em>.</p>
+<div class="table-wrap"><table><thead><tr><th>Verification behavior</th><th>Security implication</th></tr></thead><tbody><tr><td>Checks only whether the expected hash appears</td><td>Insecure</td></tr><tr><td>Accepts malformed padding or extra bytes</td><td>Potentially vulnerable</td></tr><tr><td>Requires exact valid encoding and matching message hash</td><td>Necessary for security</td></tr><tr><td>Uses a proven encoding scheme and correct implementation</td><td>Appropriate approach</td></tr></tbody></table></div>
+
+<h2>4. How RSA-PSS addresses this problem</h2>
+<p>RSA-PSS (<em>Probabilistic Signature Scheme</em>) is a modern RSA signature scheme standardized in RFC 8017.</p>
+<p>Instead of directly signing the message hash, PSS constructs an encoded message using:</p><ul><li>A cryptographic hash of the message</li><li>A random salt</li><li>A mask generation function, typically MGF1</li><li>Precisely specified encoding fields and bit constraints</li></ul>
+<p>Conceptually:</p><div class="equation">M → Hash + Salt + PSS Encoding → EM</div>
+<div class="equation">s = EM<sup>d</sup> mod n</div>
+<p>During verification:</p><div class="equation">EM′ = s<sup>e</sup> mod n</div>
+<p>The verifier then checks the PSS encoding, including the trailer, masked fields, salt-related hash computation, and relevant bit constraints. The signature is accepted only when <strong>all required checks succeed</strong>.</p>
+<p>An arbitrary value produced by exponentiation is therefore overwhelmingly unlikely to be accepted as a valid encoding for the supplied message.</p>
+<p class="small"><em>Notation note:</em> These formulas suppress the standard byte-string/integer conversions for readability.</p>
+
+<h2>5. Important distinction: Hashing alone is not enough</h2>
+<p>A common misunderstanding is:</p><blockquote>“If we hash the message before signing it, RSA signatures become secure.”</blockquote>
+<p>That is not generally true. Simply computing</p><div class="equation">s = H(M)<sup>d</sup> mod n</div>
+<p>is not the same as using a standardized, provably secure RSA signature scheme.</p>
+<p>A cryptographic hash is important, but secure signature construction also depends on the encoding, domain separation where appropriate, verification rules, and underlying security assumptions.</p>
+<p>In particular, RSA-PSS has well-studied security properties under appropriate assumptions, while ad hoc hash-and-sign constructions should not be presumed secure.</p>
+
+<h2>6. Final interpretation</h2>
+<p><strong>“Bind the message”</strong> means the verified signature must authenticate the exact message, rather than merely satisfy an RSA mathematical equation or match some unrelated data.</p>
+<p><strong>“Properly checked encoding”</strong> means the verifier must enforce every structural and cryptographic requirement defined by the signature scheme, rejecting malformed or incomplete encodings.</p>
+<p>In mathematical terms, a secure verifier should implement:</p>
+<div class="equation" style="font-size:1.08em">Verify(pk, M, s) = { 1 if all signature and encoding checks pass; 0 otherwise }</div>
+<div class="note"><strong>Key takeaway:</strong> RSA exponentiation proves only a mathematical relationship. A secure signature scheme must additionally establish that the relationship authenticates the intended message through a correctly constructed and rigorously verified encoding.</div>
+<p>That is why cryptographic applications should use standardized schemes such as <strong>RSA-PSS</strong>, rather than textbook RSA or custom padding and verification rules.</p>
+<footer>Reference: RFC 8017 — PKCS #1: RSA Cryptography Specifications Version 2.2. This educational page contains the original explanation and its signing/verification graphic.</footer>
+</main></body></html>
