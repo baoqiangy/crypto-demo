@@ -1,0 +1,183 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SHA-512: Architecture, Rounds, and Examples</title><style>
+:root{--ink:#1d2939;--muted:#58657a;--line:#dce5ed;--blue:#1d4ed8;--light:#eff6ff;--green:#166534;--bg:#f7f9fc}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.62 system-ui,-apple-system,Segoe UI,Arial,sans-serif}main{max-width:1060px;margin:auto;padding:38px 26px 80px;background:white}h1{font-size:2.05rem;letter-spacing:-.025em;margin:0 0 12px}h2{font-size:1.42rem;margin:36px 0 12px;border-bottom:1px solid var(--line);padding-bottom:7px}h3{font-size:1.11rem;margin:22px 0 8px}p{margin:10px 0}small,.muted{color:var(--muted)}.intro{font-size:1.06rem;color:#344054;max-width:850px}.eyebrow{font-size:.8rem;text-transform:uppercase;letter-spacing:.13em;color:var(--blue);font-weight:800}.card{border:1px solid var(--line);border-radius:12px;padding:17px 20px;margin:17px 0;background:#fff}.note{border-left:4px solid var(--blue);background:var(--light);padding:12px 16px;margin:15px 0}.warn{border-left:4px solid #c27803;background:#fffbeb;padding:12px 16px;margin:15px 0}.math{background:#f5f7fa;border:1px solid #e6ebf1;border-radius:6px;padding:10px 13px;overflow:auto;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}.hash{overflow-wrap:anywhere;font-family:ui-monospace,Consolas,monospace;font-size:.9rem}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{background:#e8f0ff;border-radius:30px;padding:5px 10px;color:#1d4ed8;font-weight:650;font-size:.85rem}table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.94rem}th,td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}th{background:#f2f5fa}svg{display:block;width:100%;height:auto}svg text{font-family:system-ui,Arial,sans-serif}textarea{width:100%;min-height:90px;padding:12px;border:1px solid #aebaca;border-radius:8px;font:15px/1.5 inherit;resize:vertical}button{padding:10px 17px;background:#1d4ed8;color:white;border:0;border-radius:8px;font-weight:700;cursor:pointer}button:hover{background:#1e40af}button:focus-visible{outline:3px solid #60a5fa;outline-offset:3px}.mono{font:13px/1.5 ui-monospace,Consolas,monospace}.output{background:#f6f8fb;border:1px solid #cbd5e1;border-radius:8px;padding:13px;overflow-wrap:anywhere;margin-top:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}@media(max-width:690px){main{padding:23px 15px 65px}.grid{grid-template-columns:1fr}h1{font-size:1.65rem}table{font-size:.85rem}}details{border:1px solid var(--line);padding:10px 13px;border-radius:8px;margin:9px 0}summary{cursor:pointer;font-weight:650}.codeblocks{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}@media(max-width:600px){.codeblocks{grid-template-columns:1fr}}@media print{body{background:white}main{padding:0;max-width:none}button,textarea{display:none}.card{break-inside:avoid}}
+</style></head><body><main>
+<p class="eyebrow">Cryptographic hash functions</p><h1>SHA-512: Architecture, Rounds, and Examples</h1>
+<p class="intro">SHA-512 belongs to the <strong>SHA-2 family</strong>. It reads a message in 1024-bit blocks, processes each block with 80 rounds of 64-bit operations, and returns a fixed-length 512-bit digest.</p>
+<div class="chips"><span class="chip">512-bit digest</span><span class="chip">1024-bit blocks</span><span class="chip">80 rounds</span><span class="chip">64-bit words</span></div>
+<h2>1. At a glance: the SHA-512 pipeline</h2>
+<div class="card"><svg viewBox="0 0 940 200" role="img" aria-label="SHA-512 processing pipeline: input message to padding and splitting, message schedule, 80 rounds, then 512-bit digest"><defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#64748b"/></marker></defs>
+<g font-size="19" font-weight="700" text-anchor="middle"><rect x="12" y="52" width="153" height="86" rx="13" fill="#dbeafe" stroke="#2563eb"/><text x="89" y="85" fill="#1e40af">Original</text><text x="89" y="112" fill="#1e40af">message</text><rect x="207" y="52" width="156" height="86" rx="13" fill="#e0e7ff" stroke="#6366f1"/><text x="285" y="85" fill="#3730a3">Pad and split</text><text x="285" y="112" font-size="16" fill="#3730a3">1024-bit blocks</text><rect x="405" y="52" width="149" height="86" rx="13" fill="#fef3c7" stroke="#d97706"/><text x="480" y="84" fill="#92400e">80-word</text><text x="480" y="110" fill="#92400e">schedule</text><rect x="596" y="52" width="149" height="86" rx="13" fill="#dcfce7" stroke="#16a34a"/><text x="671" y="85" fill="#166534">80-round</text><text x="671" y="112" fill="#166534">compression</text><rect x="788" y="52" width="138" height="86" rx="13" fill="#f3e8ff" stroke="#9333ea"/><text x="857" y="85" fill="#6b21a8">512-bit</text><text x="857" y="112" fill="#6b21a8">digest</text></g><g stroke="#64748b" stroke-width="2.5" fill="none" marker-end="url(#arr)"><path d="M165 95H202"/><path d="M363 95H400"/><path d="M554 95H591"/><path d="M745 95H783"/></g><text x="671" y="161" text-anchor="middle" font-size="16" fill="#475569">Repeated for every message block</text></svg></div>
+<p>Like SHA-256, SHA-512 uses an iterative <strong>Merkle–Damgård</strong> design: each block updates a chaining value that carries forward into the next block. However, SHA-512 uses different initial values and constants, 64-bit arithmetic, and 80 rather than 64 rounds.</p>
+<h2>2. Padding and parsing</h2>
+<p>For a message of length <em>L</em> bits, SHA-512 performs these operations:</p><ol><li>Append one bit <code>1</code>.</li><li>Append <em>k</em> zero bits until <code>L + 1 + k ≡ 896 (mod 1024)</code>.</li><li>Append the original message length as a <strong>128-bit big-endian integer</strong>.</li><li>Split the result into 1024-bit blocks; each block contains 16 big-endian 64-bit words.</li></ol>
+<div class="card"><svg viewBox="0 0 900 138" role="img" aria-label="Padding: original message, single one-bit, zero bits, 128-bit length; total multiple of 1024 bits"><rect x="15" y="30" width="315" height="52" rx="5" fill="#dbeafe" stroke="#2563eb"/><text x="172" y="62" text-anchor="middle" fill="#1e40af" font-size="17">Message (L bits)</text><rect x="336" y="30" width="45" height="52" rx="5" fill="#bfdbfe" stroke="#2563eb"/><text x="359" y="62" text-anchor="middle" fill="#1e40af" font-size="18">1</text><rect x="387" y="30" width="300" height="52" rx="5" fill="#e0e7ff" stroke="#6366f1"/><text x="537" y="62" text-anchor="middle" fill="#3730a3" font-size="17">k zero bits</text><rect x="693" y="30" width="192" height="52" rx="5" fill="#fef3c7" stroke="#d97706"/><text x="789" y="52" text-anchor="middle" fill="#92400e" font-size="16">128-bit length</text><text x="789" y="71" text-anchor="middle" fill="#92400e" font-size="13">Big-endian</text><path d="M15 92V103H885V92" fill="none" stroke="#64748b" stroke-width="2"/><text x="450" y="128" text-anchor="middle" font-size="17" fill="#475569">Total length: a multiple of 1024 bits</text></svg></div>
+<div class="note"><strong>For <code>"abc"</code>:</strong> the UTF-8 bytes are <code>61 62 63</code> (24 bits). Padding gives <code>0x61626380</code>, followed by zero bytes, and finally the 128-bit representation of 24 (<code>0x18</code> at the end). The padded message occupies one 1024-bit block.</div>
+<h2>3. Eight 64-bit chaining words</h2><p>SHA-512 starts with eight specified constants. Each constant is a 64-bit word, represented in hexadecimal:</p>
+<div class="codeblocks"><div class="math">H₀ = 6a09e667f3bcc908<br>H₁ = bb67ae8584caa73b<br>H₂ = 3c6ef372fe94f82b<br>H₃ = a54ff53a5f1d36f1</div><div class="math">H₄ = 510e527fade682d1<br>H₅ = 9b05688c2b3e6c1f<br>H₆ = 1f83d9abfb41bd6b<br>H₇ = 5be0cd19137e2179</div></div>
+<p>These constants are derived from the fractional parts of the square roots of the first eight prime numbers. A new block begins with eight working variables <code>a, b, c, d, e, f, g, h</code> copied from the current chaining words.</p>
+<h2>4. Expand the message into 80 words</h2><p>Read the block as 16 words <code>W[0]</code> through <code>W[15]</code>. Compute 64 additional words using 64-bit modular addition:</p>
+<div class="math">For t = 16, 17, ..., 79:
+W[t] = (σ₁(W[t−2]) + W[t−7] + σ₀(W[t−15]) + W[t−16]) mod 2⁶⁴
+
+σ₀(x) = ROTR¹(x) ⊕ ROTR⁸(x) ⊕ SHR⁷(x)
+σ₁(x) = ROTR¹⁹(x) ⊕ ROTR⁶¹(x) ⊕ SHR⁶(x)</div>
+<p><code>ROTR</code> means rotate bits right (wrapped bits reappear on the left); <code>SHR</code> shifts bits right and fills from the left with zeros; <code>⊕</code> means XOR.</p>
+<h2>5. The 80 compression rounds</h2><p>Each round uses one schedule word <code>W[t]</code> and a fixed round constant <code>K[t]</code>. SHA-512 has 80 such 64-bit constants, derived from fractional parts of cube roots of the first 80 primes.</p>
+<div class="grid"><div class="card"><h3>Boolean functions</h3><div class="math">Ch(x,y,z) = (x ∧ y) ⊕ (¬x ∧ z)
+Maj(x,y,z) = (x ∧ y) ⊕ (x ∧ z) ⊕ (y ∧ z)</div><p class="muted"><strong>Ch</strong> chooses bits of y or z based on x. <strong>Maj</strong> selects the majority bit at each position.</p></div><div class="card"><h3>Uppercase sigma functions</h3><div class="math">Σ₀(x) = ROTR²⁸(x) ⊕ ROTR³⁴(x) ⊕ ROTR³⁹(x)
+Σ₁(x) = ROTR¹⁴(x) ⊕ ROTR¹⁸(x) ⊕ ROTR⁴¹(x)</div><p class="muted">These differ from lowercase σ functions used in the message schedule.</p></div></div>
+<div class="math">T₁ = (h + Σ₁(e) + Ch(e,f,g) + K[t] + W[t]) mod 2⁶⁴
+T₂ = (Σ₀(a) + Maj(a,b,c)) mod 2⁶⁴
+
+(a,b,c,d,e,f,g,h) ←
+((T₁+T₂) mod 2⁶⁴, a, b, c, (d+T₁) mod 2⁶⁴, e, f, g)</div>
+<div class="card"><svg viewBox="0 0 940 278" role="img" aria-label="One SHA-512 compression round: values h, Sigma1(e), Ch(e,f,g), Kt and Wt combine to make T1; Sigma0(a) and Maj(a,b,c) make T2; update a and e"><defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs><g font-size="17" text-anchor="middle"><rect x="18" y="22" width="150" height="42" rx="7" fill="#dbeafe" stroke="#2563eb"/><text x="93" y="48" fill="#1e40af">h</text><rect x="175" y="22" width="150" height="42" rx="7" fill="#dbeafe" stroke="#2563eb"/><text x="250" y="48" fill="#1e40af">Σ₁(e)</text><rect x="332" y="22" width="150" height="42" rx="7" fill="#dbeafe" stroke="#2563eb"/><text x="407" y="48" fill="#1e40af">Ch(e,f,g)</text><rect x="489" y="22" width="150" height="42" rx="7" fill="#dbeafe" stroke="#2563eb"/><text x="564" y="48" fill="#1e40af">K[t]</text><rect x="646" y="22" width="150" height="42" rx="7" fill="#dbeafe" stroke="#2563eb"/><text x="721" y="48" fill="#1e40af">W[t]</text><rect x="282" y="109" width="170" height="56" rx="9" fill="#fef3c7" stroke="#d97706"/><text x="367" y="142" fill="#92400e" font-weight="700">T₁ (sum mod 2⁶⁴)</text><rect x="568" y="109" width="171" height="56" rx="9" fill="#dcfce7" stroke="#16a34a"/><text x="653" y="142" fill="#166534" font-weight="700">T₂</text><rect x="236" y="214" width="190" height="48" rx="9" fill="#e0e7ff" stroke="#6366f1"/><text x="331" y="243" fill="#3730a3">new e = d + T₁</text><rect x="509" y="214" width="200" height="48" rx="9" fill="#f3e8ff" stroke="#9333ea"/><text x="609" y="243" fill="#6b21a8">new a = T₁ + T₂</text></g><g stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a2)"><path d="M93 64V82H367V104"/><path d="M250 64V88H367V104"/><path d="M407 64V104"/><path d="M564 64V86H367V104"/><path d="M721 64V93H367V104"/><path d="M367 165V184H331V208"/><path d="M367 165V187H609V208"/><path d="M653 165V208"/></g><text x="654" y="95" text-anchor="middle" fill="#475569" font-size="15">Σ₀(a) + Maj(a,b,c)</text><text x="77" y="192" font-size="15" fill="#475569">Other words shift:</text><text x="65" y="215" font-size="14" fill="#475569">b←a, c←b, d←c</text><text x="65" y="235" font-size="14" fill="#475569">f←e, g←f, h←g</text></svg></div>
+<p>All additions are performed modulo <code>2^64</code>, meaning overflow beyond 64 bits is discarded.</p>
+<h2>6. Feedforward and final digest</h2><p>After 80 rounds, add the working variables back into the previous chaining words (modulo <code>2^64</code>):</p>
+<div class="math">H₀ ← (H₀ + a) mod 2⁶⁴   H₁ ← (H₁ + b) mod 2⁶⁴
+H₂ ← (H₂ + c) mod 2⁶⁴   H₃ ← (H₃ + d) mod 2⁶⁴
+H₄ ← (H₄ + e) mod 2⁶⁴   H₅ ← (H₅ + f) mod 2⁶⁴
+H₆ ← (H₆ + g) mod 2⁶⁴   H₇ ← (H₇ + h) mod 2⁶⁴</div>
+<p>After every padded block has been processed, concatenate <code>H₀ ‖ H₁ ‖ ... ‖ H₇</code>, each as eight big-endian bytes, to obtain the 512-bit (64-byte) digest, normally written as <strong>128 hexadecimal characters</strong>.</p>
+<h2>7. Worked example: SHA-512("abc")</h2><ol><li>The three ASCII characters are encoded as the hexadecimal bytes <code>61 62 63</code>.</li><li>After padding, the single 1024-bit block starts with <code>61 62 63 80</code> and ends with a 128-bit length field for <code>24</code>.</li><li>In the first 16 schedule words: <code>W[0] = 6162638000000000</code>, <code>W[1] ... W[14] = 0</code>, and <code>W[15] = 0000000000000018</code>.</li><li>Expand to 80 words, run 80 rounds, add the resulting working words to the initial chaining words, and concatenate all eight 64-bit words.</li></ol>
+<p><strong>Expected SHA-512 digest:</strong></p><div class="math hash">ddaf35a193617abacc417349ae204131
+12e6fa4e89a97ea20a9eeee64b55d39a
+2192992a274fc1a836ba3c23a3feebbd
+454d4423643ce80e2a9ac94fa54ca49f</div>
+<h2>8. Interactive SHA-512 calculator</h2><p>Enter text to compute SHA-512 locally in your browser. This calculator implements the SHA-512 compression algorithm in JavaScript and does not send any input to a server.</p><div class="card"><label for="message"><strong>Input text</strong></label><textarea id="message">abc</textarea><p><button type="button" id="compute">Compute SHA-512</button> <span id="status" class="muted" role="status"></span></p><div class="output mono" id="digest" aria-live="polite"></div><p class="muted" style="font-size:.85rem">Uses UTF-8 text encoding. Runs offline, including when opened as a local <code>.html</code> file.</p></div>
+<h2>9. SHA-512 vs SHA-256</h2><table><thead><tr><th>Characteristic</th><th>SHA-256</th><th>SHA-512</th></tr></thead><tbody><tr><td>Family</td><td>SHA-2</td><td>SHA-2</td></tr><tr><td>Output</td><td>256 bits</td><td>512 bits</td></tr><tr><td>Block size</td><td>512 bits</td><td>1024 bits</td></tr><tr><td>Working-word size</td><td>32 bits</td><td>64 bits</td></tr><tr><td>Rounds per block</td><td>64</td><td>80</td></tr><tr><td>Ideal collision work factor</td><td>About 2¹²⁸</td><td>About 2²⁵⁶</td></tr><tr><td>Typical use</td><td>Digital integrity and signatures</td><td>Digital integrity and signatures; large digest requirements</td></tr></tbody></table>
+<div class="warn"><strong>Security notes:</strong> SHA-512 remains a recommended cryptographic hash function for appropriate applications, but ordinary SHA-512 is not a password-storage scheme. Use a password hashing algorithm such as Argon2id. For message authentication, use HMAC-SHA-512 rather than <code>SHA512(secret || message)</code>, which can be vulnerable to length extension. A hash alone does not prove authenticity.</div>
+<h2>10. Check your understanding</h2>
+<details><summary>1. Why does SHA-512 pad to 896 bits modulo 1024 before the length field?</summary><p>The final 128 bits of the last 1024-bit block are reserved for the big-endian original message length.</p></details>
+<details><summary>2. What distinguishes σ₀/σ₁ from Σ₀/Σ₁?</summary><p>Lowercase sigma functions are used to expand the message schedule. Uppercase sigma functions are used in each compression round; they have different rotation amounts.</p></details>
+<details><summary>3. How do Ch and Maj affect the round computation?</summary><p>Ch conditionally selects one bit source, while Maj takes the bitwise majority of three input words. Both provide nonlinear mixing.</p></details>
+<details><summary>4. Why are SHA-512 and SHA-256 not just different output lengths?</summary><p>They also use different block and word sizes, constants, rotation amounts, and numbers of rounds.</p></details>
+<details><summary>5. Does a 512-bit digest guarantee 512-bit collision resistance?</summary><p>No. Ideal generic collision search takes about 2²⁵⁶ operations, by the birthday bound. Actual security also depends on the algorithm and threat model.</p></details>
+<script>
+'use strict';
+const MASK=(1n<<64n)-1n;
+const K=[0x428a2f98d728ae22n,
+0x7137449123ef65cdn,
+0xb5c0fbcfec4d3b2fn,
+0xe9b5dba58189dbbcn,
+0x3956c25bf348b538n,
+0x59f111f1b605d019n,
+0x923f82a4af194f9bn,
+0xab1c5ed5da6d8118n,
+0xd807aa98a3030242n,
+0x12835b0145706fben,
+0x243185be4ee4b28cn,
+0x550c7dc3d5ffb4e2n,
+0x72be5d74f27b896fn,
+0x80deb1fe3b1696b1n,
+0x9bdc06a725c71235n,
+0xc19bf174cf692694n,
+0xe49b69c19ef14ad2n,
+0xefbe4786384f25e3n,
+0x0fc19dc68b8cd5b5n,
+0x240ca1cc77ac9c65n,
+0x2de92c6f592b0275n,
+0x4a7484aa6ea6e483n,
+0x5cb0a9dcbd41fbd4n,
+0x76f988da831153b5n,
+0x983e5152ee66dfabn,
+0xa831c66d2db43210n,
+0xb00327c898fb213fn,
+0xbf597fc7beef0ee4n,
+0xc6e00bf33da88fc2n,
+0xd5a79147930aa725n,
+0x06ca6351e003826fn,
+0x142929670a0e6e70n,
+0x27b70a8546d22ffcn,
+0x2e1b21385c26c926n,
+0x4d2c6dfc5ac42aedn,
+0x53380d139d95b3dfn,
+0x650a73548baf63den,
+0x766a0abb3c77b2a8n,
+0x81c2c92e47edaee6n,
+0x92722c851482353bn,
+0xa2bfe8a14cf10364n,
+0xa81a664bbc423001n,
+0xc24b8b70d0f89791n,
+0xc76c51a30654be30n,
+0xd192e819d6ef5218n,
+0xd69906245565a910n,
+0xf40e35855771202an,
+0x106aa07032bbd1b8n,
+0x19a4c116b8d2d0c8n,
+0x1e376c085141ab53n,
+0x2748774cdf8eeb99n,
+0x34b0bcb5e19b48a8n,
+0x391c0cb3c5c95a63n,
+0x4ed8aa4ae3418acbn,
+0x5b9cca4f7763e373n,
+0x682e6ff3d6b2b8a3n,
+0x748f82ee5defb2fcn,
+0x78a5636f43172f60n,
+0x84c87814a1f0ab72n,
+0x8cc702081a6439ecn,
+0x90befffa23631e28n,
+0xa4506cebde82bde9n,
+0xbef9a3f7b2c67915n,
+0xc67178f2e372532bn,
+0xca273eceea26619cn,
+0xd186b8c721c0c207n,
+0xeada7dd6cde0eb1en,
+0xf57d4f7fee6ed178n,
+0x06f067aa72176fban,
+0x0a637dc5a2c898a6n,
+0x113f9804bef90daen,
+0x1b710b35131c471bn,
+0x28db77f523047d84n,
+0x32caab7b40c72493n,
+0x3c9ebe0a15c9bebcn,
+0x431d67c49c100d4cn,
+0x4cc5d4becb3e42b6n,
+0x597f299cfc657e2an,
+0x5fcb6fab3ad6faecn,
+0x6c44198c4a475817n];
+const IV=[0x6a09e667f3bcc908n, 0xbb67ae8584caa73bn, 0x3c6ef372fe94f82bn, 0xa54ff53a5f1d36f1n, 0x510e527fade682d1n, 0x9b05688c2b3e6c1fn, 0x1f83d9abfb41bd6bn, 0x5be0cd19137e2179n];
+function rr(v,n){let s=BigInt(n);return ((v>>s)|(v<<(64n-s)))&MASK}
+function sh(v,n){return v>>BigInt(n)}
+function ch(x,y,z){return (x&y)^((MASK^x)&z)}
+function maj(x,y,z){return (x&y)^(x&z)^(y&z)}
+function b0(x){return rr(x,28)^rr(x,34)^rr(x,39)}
+function b1(x){return rr(x,14)^rr(x,18)^rr(x,41)}
+function s0(x){return rr(x,1)^rr(x,8)^sh(x,7)}
+function s1(x){return rr(x,19)^rr(x,61)^sh(x,6)}
+function sha512(bytes){
+ const originalLen=BigInt(bytes.length)*8n;
+ const nBlocks=Math.ceil((bytes.length+1+16)/128);
+ const padded=new Uint8Array(nBlocks*128);
+ padded.set(bytes); padded[bytes.length]=128;
+ let len=originalLen;
+ for(let j=0;j<16;j++){padded[padded.length-1-j]=Number(len&255n);len>>=8n}
+ const H=IV.slice();
+ for(let off=0;off<padded.length;off+=128){
+  const W=new Array(80);
+  for(let i=0;i<16;i++){
+   let v=0n;for(let j=0;j<8;j++)v=(v<<8n)|BigInt(padded[off+i*8+j]);W[i]=v;
+  }
+  for(let i=16;i<80;i++)W[i]=(s1(W[i-2])+W[i-7]+s0(W[i-15])+W[i-16])&MASK;
+  let [a,b,c,d,e,f,g,h]=H;
+  for(let i=0;i<80;i++){
+   let t1=(h+b1(e)+ch(e,f,g)+K[i]+W[i])&MASK;
+   let t2=(b0(a)+maj(a,b,c))&MASK;
+   h=g;g=f;f=e;e=(d+t1)&MASK;d=c;c=b;b=a;a=(t1+t2)&MASK;
+  }
+  for(let i=0;i<8;i++)H[i]=(H[i]+[a,b,c,d,e,f,g,h][i])&MASK;
+ }
+ return H.map(x=>x.toString(16).padStart(16,'0')).join('');
+}
+const textArea=document.getElementById('message');
+const digest=document.getElementById('digest');
+const status=document.getElementById('status');
+function calculate(){try{const bytes=new TextEncoder().encode(textArea.value);digest.textContent=sha512(bytes);status.textContent=`${bytes.length} UTF-8 bytes`; }catch(e){status.textContent='Unable to calculate digest';digest.textContent=String(e.message||e)}}
+document.getElementById('compute').addEventListener('click',calculate);
+const test1=sha512(new TextEncoder().encode('abc'));
+const test2=sha512(new Uint8Array());
+if(test1!=='ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f'||test2!=='cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e'){
+ status.textContent='Internal test failed. Calculator output may be incorrect.';
+}else{calculate()}
+</script>
+</main></body></html>
