@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merkle–Damgård Construction</title>
+<style>
+:root{color-scheme:light;--ink:#172638;--muted:#52677e;--accent:#245db4;--pale:#edf4ff;--line:#d7e1ec;--bg:#f6f9fc}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,'Segoe UI',sans-serif}.wrap{max-width:1020px;margin:26px auto;padding:30px 40px 42px;background:white;border:1px solid var(--line);border-radius:16px;box-shadow:0 5px 28px #162c4510}h1{font-size:2rem;letter-spacing:-.03em;line-height:1.25;margin:0 0 13px}h2{font-size:1.43rem;border-bottom:1px solid var(--line);padding-bottom:8px;margin:32px 0 13px}h3{font-size:1.08rem;margin:19px 0 7px}p{margin:10px 0}ul,ol{padding-left:26px}li{margin:5px 0}.lead{color:var(--muted);font-size:1.04rem}.math{margin:14px auto;padding:11px 16px;border-radius:9px;background:#f4f7fc;text-align:center;font:1.09rem/1.65 Georgia,serif;overflow-x:auto}.math sub{font-size:.7em}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}code{background:#eff3f7;padding:1px 5px;border-radius:4px}pre{padding:14px;border-radius:8px;background:#14263d;color:#f1f5fa;overflow:auto;font-size:.88rem}.panel{border:1px solid var(--line);background:#fbfdff;border-radius:12px;padding:18px;margin:17px 0}.panel svg{display:block;width:100%;height:auto}.cap{text-align:center;color:var(--muted);font-size:.88rem;margin-top:8px}.note{border-left:4px solid #2963bd;background:#eef5ff;padding:13px 16px;margin:18px 0;border-radius:0 7px 7px 0}.warning{border-left-color:#b76c12;background:#fff8eb}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.step{border:1px solid var(--line);border-radius:9px;padding:12px;background:white}.step strong{color:var(--accent)}table{width:100%;border-collapse:collapse;margin:14px 0}th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}th{background:var(--pale)}details{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:8px 0}summary{cursor:pointer;font-weight:600}.small{color:var(--muted);font-size:.9rem}@media(max-width:700px){.wrap{margin:0;padding:20px 18px;border:0;border-radius:0}.grid{grid-template-columns:1fr}h1{font-size:1.68rem}h2{font-size:1.3rem}body{font-size:15px}}@media print{body{background:white}.wrap{border:0;box-shadow:none;margin:0;padding:0}details{break-inside:avoid}}
+</style></head><body><main class="wrap">
+<h1>Merkle–Damgård Construction</h1>
+<p class="lead">A method for creating a variable-length cryptographic hash function from a fixed-input-size compression function.</p>
+<p>The <strong>Merkle–Damgård construction</strong> processes a message one block at a time. A fixed-length <strong>chaining value</strong> is updated using each block, and the last chaining value becomes the digest. MD5, SHA-1, SHA-256, SHA-512, and RIPEMD-160 use this general architecture; SHA-3 instead uses a sponge construction.</p>
+<h2>1. The basic structure</h2>
+<div class="panel">
+<svg viewBox="0 0 920 290" role="img" aria-label="Merkle–Damgård compression chain, from the initial value through three message blocks to the final digest" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8" fill="none" stroke="#46566b" stroke-width="1.4"/></marker></defs>
+<rect x="20" y="100" width="98" height="46" rx="9" fill="#e9edf2" stroke="#7b8a9a"/><text x="69" y="129" text-anchor="middle" font-size="19" font-weight="bold" fill="#23384e">IV = H₀</text>
+<g fill="#dceafe" stroke="#2e68b5" stroke-width="2"><rect x="181" y="22" width="124" height="46" rx="8"/><rect x="429" y="22" width="124" height="46" rx="8"/><rect x="677" y="22" width="124" height="46" rx="8"/></g>
+<g fill="#173d77" font-size="19" text-anchor="middle" font-weight="bold"><text x="243" y="51">Block M₁</text><text x="491" y="51">Block M₂</text><text x="739" y="51">Block M₃</text></g>
+<g fill="#fff0d1" stroke="#c88724" stroke-width="2"><rect x="194" y="105" width="98" height="54" rx="10"/><rect x="442" y="105" width="98" height="54" rx="10"/><rect x="690" y="105" width="98" height="54" rx="10"/></g>
+<g font-size="20" text-anchor="middle" fill="#7e4d06" font-weight="bold"><text x="243" y="139">f</text><text x="491" y="139">f</text><text x="739" y="139">f</text></g>
+<g fill="none" stroke="#46566b" stroke-width="2.5" marker-end="url(#a)"><path d="M118 123 H190"/><path d="M292 132 H438"/><path d="M540 132 H686"/><path d="M788 132 H878"/><path d="M243 68 V101"/><path d="M491 68 V101"/><path d="M739 68 V101"/></g>
+<g fill="#52677e" font-size="17"><text x="356" y="120">H₁</text><text x="604" y="120">H₂</text><text x="826" y="120">H₃</text></g>
+<path d="M877 132 V210 H484 V232" fill="none" stroke="#46566b" stroke-width="2.5" marker-end="url(#a)"/>
+<rect x="346" y="232" width="275" height="48" rx="9" fill="#dff6e9" stroke="#2b9765" stroke-width="2"/><text x="483" y="263" text-anchor="middle" fill="#166142" font-size="20" font-weight="bold">Final hash digest</text>
+</svg>
+<p class="cap">Each compression operation combines a message block with the previous chaining value. Three blocks are shown for illustration.</p>
+</div>
+<p><strong>Symbols:</strong> <em>M<sub>i</sub></em> is the ith block, <em>IV</em> the initialization value, <em>f</em> the compression function, and <em>H<sub>i</sub></em> the chaining value after the ith block. All chaining values have a fixed width for a given algorithm.</p>
+<h2>2. Mathematical definition</h2>
+<p>After padding, divide the message into <em>n</em> fixed-size blocks:</p>
+<div class="math">M = M<sub>1</sub> ∥ M<sub>2</sub> ∥ ⋯ ∥ M<sub>n</sub></div>
+<p>Initialize the state and process each block:</p>
+<div class="math">H<sub>0</sub> = IV<br>H<sub>i</sub> = f(H<sub>i−1</sub>, M<sub>i</sub>) &nbsp; for i = 1, …, n</div>
+<div class="math"><strong>Hash(M) = H<sub>n</sub></strong></div>
+<p>This repeated use of the compression function is called <strong>iterative hashing</strong>.</p>
+<h2>3. Walkthrough with SHA-256</h2>
+<p>Consider the message <code>Hello World</code> (11 ASCII bytes, or 88 bits).</p>
+<div class="grid"><div class="step"><strong>1. Pad the message</strong><p>Append one <code>1</code> bit, enough zeros, and a 64-bit encoding of the original length. For this short input, the result is one 512-bit block.</p></div><div class="step"><strong>2. Initialize</strong><p>Start from SHA-256's predefined eight 32-bit words, totaling a 256-bit chaining value.</p></div><div class="step"><strong>3. Compress</strong><p>Expand the block into 64 schedule words and run 64 compression rounds, updating the eight working registers.</p></div></div>
+<div class="grid"><div class="step"><strong>4. Feed forward</strong><p>Add the final working registers into the prior chaining value, word by word modulo 2³².</p></div><div class="step"><strong>5. Continue if needed</strong><p>For a longer message, pass this chaining value to the next 512-bit block.</p></div><div class="step"><strong>6. Output</strong><p>Concatenate the final eight 32-bit chaining words to form the 256-bit digest.</p></div></div>
+<p class="small">For SHA-256, the original message length is encoded in a 64-bit field. Extremely long messages beyond the specified length bound are not supported by this format.</p>
+<h2>4. Why length padding matters</h2>
+<p>Standard Merkle–Damgård hashes use <strong>length strengthening</strong>: the padded blocks encode the original message length. This ensures that different messages have an appropriately distinguished padded representation and supports a collision-resistance argument for the overall construction when the underlying compression function is collision resistant.</p>
+<div class="note">The padding is not a secret. In SHA-256 it follows the publicly specified form: message bits, a <code>1</code> bit, zero bits, then a 64-bit message length.</div>
+<h2>5. Why the construction is useful</h2>
+<table><thead><tr><th>Property</th><th>Benefit</th></tr></thead><tbody><tr><td>Block-by-block processing</td><td>Large files can be hashed incrementally without loading all contents into memory.</td></tr><tr><td>Fixed-size state</td><td>The intermediate chaining value stays the same size throughout processing.</td></tr><tr><td>Modular design</td><td>The message-processing framework is separated from the algorithm-specific compression function.</td></tr><tr><td>Length strengthening</td><td>Supports collision-resistance reasoning under suitable assumptions about the compression function.</td></tr></tbody></table>
+<h2>6. The length-extension weakness</h2>
+<p>In traditional Merkle–Damgård hashes such as MD5, SHA-1, and SHA-256, the digest exposes the final chaining state. This makes it possible to continue hashing additional blocks if the original digest and the original message length are known.</p>
+<p>Consider a poorly designed message authentication scheme:</p>
+<div class="math">T = SHA256(K ∥ M)</div>
+<p>Here <em>K</em> is a secret key and <em>M</em> is a known message. Given <em>T</em> and an appropriate guess of the secret key's length, an attacker may be able to forge a valid tag for a message of the form:</p>
+<div class="math">M ∥ glue_padding ∥ M′</div>
+<p>The attacker does not need to recover the secret key: the published digest provides the state needed to process the extra data. The exact forged message includes the padding bytes that would have followed <em>K ∥ M</em>.</p>
+<div class="note warning"><strong>Correct approach:</strong> For message authentication use <strong>HMAC-SHA-256</strong>, not <code>SHA256(key || message)</code>. HMAC is specifically designed to avoid this vulnerability.</div>
+<p>This classic attack does not mean that an attacker can easily recover the original message from its SHA-256 hash, or that arbitrary collisions are easy to find.</p>
+<h2>7. Merkle–Damgård versus sponge construction</h2>
+<table><thead><tr><th>Feature</th><th>Merkle–Damgård</th><th>Sponge</th></tr></thead><tbody><tr><td>Representative hash</td><td>SHA-256</td><td>SHA3-256</td></tr><tr><td>Core primitive</td><td>Compression function</td><td>Permutation</td></tr><tr><td>Processing model</td><td>Iteratively update chaining values</td><td>Absorb input into a state, then squeeze output</td></tr><tr><td>Output</td><td>Usually a fixed digest size</td><td>Fixed length (SHA-3) or variable length (SHAKE)</td></tr><tr><td>Classic length extension</td><td>A concern for many unkeyed instances</td><td>Not exposed in the same chaining-state manner</td></tr></tbody></table>
+<h2>8. Review questions</h2>
+<details><summary>1. What are the two inputs to a Merkle–Damgård compression function?</summary><p>The previous chaining value and the current padded message block.</p></details>
+<details><summary>2. What is the main purpose of Merkle–Damgård strengthening?</summary><p>It encodes the original message length in the padding, which distinguishes message boundaries and supports collision-resistance analysis.</p></details>
+<details><summary>3. Why can a short SHA-256 message still require 512 bits of input to the compression function?</summary><p>SHA-256 pads messages to complete 512-bit blocks; the padding includes the message length.</p></details>
+<details><summary>4. Why is SHA256(key ∥ message) unsafe as a MAC?</summary><p>Knowledge of the digest can reveal the final chaining state and support a length-extension forgery. Use HMAC-SHA-256.</p></details>
+<details><summary>5. Does SHA-3 use the Merkle–Damgård design?</summary><p>No. SHA-3 is based on Keccak's sponge construction.</p></details>
+<div class="note"><strong>Remember:</strong> H<sub>i</sub> = f(H<sub>i−1</sub>, M<sub>i</sub>). A series of fixed-size compression steps turns arbitrarily long supported messages into a fixed-size digest.</div>
+</main></body></html>
