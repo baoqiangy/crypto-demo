@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Variable-Length CBC-MAC</title>
+<style>
+:root{--ink:#193047;--muted:#52677a;--blue:#1463a0;--pale:#eaf3fb;--line:#dce5ed;--orange:#aa5e09;--warn:#fff5e5;--green:#135b46;--bg:#f4f7fb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.68 system-ui,-apple-system,'Segoe UI',Arial,sans-serif}.page{max-width:950px;margin:30px auto;background:#fff;padding:46px 56px;box-shadow:0 10px 36px #243b5017;border-radius:16px}h1{font-size:2.25rem;line-height:1.2;margin:0 0 12px;color:#14334f}h2{font-size:1.37rem;border-bottom:1px solid var(--line);padding-bottom:8px;margin:32px 0 15px}h3{font-size:1.08rem;margin:22px 0 8px}p{margin:11px 0}ul,ol{padding-left:24px}.intro{font-size:1.1rem;color:var(--muted);margin-bottom:20px}.tag{font-weight:700;letter-spacing:.06em;font-size:.73rem;color:#24709e;text-transform:uppercase}.formula{font-family:Cambria,'Times New Roman',serif;font-size:1.23rem;overflow:auto;text-align:center;background:#eff5fa;border:1px solid #d5e5f1;border-radius:8px;padding:15px;margin:18px 0}.note{padding:14px 17px;background:var(--pale);border-left:4px solid #2e84bb;border-radius:5px}.warning{background:var(--warn);border-left:4px solid #dd9832;padding:15px 18px;border-radius:5px}.success{background:#eaf7f1;border-left:4px solid #278765;padding:15px 18px;border-radius:5px}code{font-family:Consolas,'Liberation Mono',monospace;font-size:.91em}pre{background:#172b3e;color:#f2f7fc;border-radius:10px;padding:19px;overflow:auto;font-size:.9rem;line-height:1.7}table{width:100%;border-collapse:collapse;margin:17px 0;font-size:.95rem}th{text-align:left;background:#eaf2f9}th,td{border:1px solid #d7e3ec;padding:10px 12px;vertical-align:top}.diagram{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}svg text{font-family:system-ui,-apple-system,'Segoe UI',sans-serif}.small{font-size:.88rem;color:var(--muted)}a{color:var(--blue)}.steps li{margin:9px 0}.q li{margin:10px 0}@media(max-width:650px){.page{margin:0;padding:25px 19px;border-radius:0}h1{font-size:1.75rem}.formula{font-size:1.04rem}}@media print{body{background:white}.page{margin:0;box-shadow:none;max-width:none;padding:0;border-radius:0}h2,h3{break-after:avoid}.diagram,.note,.warning,.success,table{break-inside:avoid}a{color:#153e63}}
+</style>
+</head><body><main class="page">
+<div class="tag">Cryptography • Message Authentication Codes</div>
+<h1>Variable-Length CBC-MAC</h1>
+<p class="intro">Why basic CBC-MAC is vulnerable when messages can contain different numbers of blocks—and how to avoid the vulnerability.</p>
+<section><h2>1. Review: How CBC-MAC works</h2>
+<p><strong>CBC-MAC</strong> (Cipher Block Chaining Message Authentication Code) uses a block cipher, such as AES, to authenticate a message. The message is divided into blocks and processed sequentially with a <strong>zero initialization value</strong>. The final encrypted block is the authentication tag.</p>
+<div class="formula">C<sub>0</sub> = 0<sup>b</sup> &nbsp;&nbsp;&nbsp; C<sub>i</sub> = E<sub>K</sub>(M<sub>i</sub> ⊕ C<sub>i−1</sub>) &nbsp;&nbsp;&nbsp; T = C<sub>n</sub></div>
+<p><code>M<sub>i</sub></code> is a message block, <code>E<sub>K</sub></code> is the block cipher keyed with <code>K</code>, <code>⊕</code> is bitwise XOR, and <code>b</code> is the block size (128 bits for AES).</p>
+<svg class="diagram" viewBox="0 0 820 236" role="img" aria-label="CBC-MAC processes M1 then M2 through XOR and block-cipher operations and outputs the final block as tag">
+<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="none" stroke="#466883" stroke-width="1.5"/></marker></defs>
+<rect x="23" y="13" width="124" height="47" rx="8" fill="#dceafa" stroke="#92b7dc"/><text x="85" y="42" text-anchor="middle" font-size="19" fill="#154e7c">M₁</text>
+<rect x="352" y="13" width="124" height="47" rx="8" fill="#dceafa" stroke="#92b7dc"/><text x="414" y="42" text-anchor="middle" font-size="19" fill="#154e7c">M₂</text>
+<circle cx="85" cy="99" r="21" fill="#f9edcd" stroke="#d5ad57"/><text x="85" y="106" text-anchor="middle" font-size="23" fill="#76561c">⊕</text>
+<circle cx="414" cy="99" r="21" fill="#f9edcd" stroke="#d5ad57"/><text x="414" y="106" text-anchor="middle" font-size="23" fill="#76561c">⊕</text>
+<rect x="23" y="149" width="124" height="48" rx="9" fill="#e1f2eb" stroke="#7fad98"/><text x="85" y="179" text-anchor="middle" font-size="20" fill="#1f6a4b">Eₖ</text>
+<rect x="352" y="149" width="124" height="48" rx="9" fill="#e1f2eb" stroke="#7fad98"/><text x="414" y="179" text-anchor="middle" font-size="20" fill="#1f6a4b">Eₖ</text>
+<rect x="632" y="149" width="164" height="48" rx="9" fill="#eee6fa" stroke="#9d84bf"/><text x="714" y="179" text-anchor="middle" font-size="19" font-weight="700" fill="#5c3987">Tag = C₂</text>
+<g fill="none" stroke="#466883" stroke-width="2.4" marker-end="url(#arr)"><path d="M85 60V77"/><path d="M85 120V149"/><path d="M414 60V77"/><path d="M414 120V149"/><path d="M147 174H245V99H392"/><path d="M476 174H630"/></g><text x="245" y="88" text-anchor="middle" font-size="14" fill="#52677a">C₁</text><text x="95" y="219" font-size="13" fill="#52677a">C₀ = 0</text><text x="505" y="161" font-size="13" fill="#52677a">C₂</text>
+</svg>
+<p class="small">Two-block CBC-MAC computation. The second block is XORed with the first block's cipher output before encryption.</p>
+</section>
+<section><h2>2. What does “variable-length” mean?</h2>
+<p>A fixed-length protocol might accept <strong>exactly two 128-bit blocks</strong> for every authenticated message. A variable-length protocol might accept one, two, three, or more blocks under the same key.</p>
+<div class="warning"><strong>Core security limitation:</strong> Basic CBC-MAC with a fixed zero IV is secure under suitable fixed-length-message assumptions, but it is <strong>not a secure MAC for unrestricted variable-length messages</strong>. An attacker who observes valid message–tag pairs can sometimes construct a valid tag for a new message without learning the secret key.</div>
+</section>
+<section><h2>3. A variable-length forgery attack</h2>
+<p>Consider an attacker who knows a valid one-block message <code>M</code> and its tag <code>T</code>:</p>
+<div class="formula">T = CBC-MAC<sub>K</sub>(M) = E<sub>K</sub>(M)</div>
+<p>The attacker creates a <strong>new two-block message</strong>:</p>
+<div class="formula">M′ = M ∥ (M ⊕ T)</div>
+<p>Here <code>∥</code> means concatenation. The attacker submits the <strong>same tag T</strong> for the new message. Why does it pass verification?</p>
+<ol class="steps">
+<li>Process the first block: <code>C₁ = Eₖ(M) = T</code>.</li>
+<li>XOR the forged second block with the chaining value: <code>(M ⊕ T) ⊕ C₁ = (M ⊕ T) ⊕ T = M</code>.</li>
+<li>Encrypt that result: <code>C₂ = Eₖ(M) = T</code>.</li>
+<li>The verifier accepts the new two-block message with the original tag <code>T</code>.</li>
+</ol>
+<div class="formula">CBC-MAC<sub>K</sub>(M ∥ (M ⊕ T)) = T</div>
+<svg class="diagram" viewBox="0 0 820 245" role="img" aria-label="Forgery demonstration: the first M gives tag T, then a second block M XOR T cancels T and gives the same tag">
+<defs><marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="none" stroke="#486b86" stroke-width="1.6"/></marker></defs>
+<rect x="15" y="27" width="145" height="52" rx="9" fill="#dceafa" stroke="#90b7dc"/><text x="87" y="58" font-size="18" text-anchor="middle" fill="#154e7c">M</text>
+<rect x="215" y="27" width="145" height="52" rx="9" fill="#e1f2eb" stroke="#82ad9a"/><text x="287" y="58" font-size="18" text-anchor="middle" fill="#1f6a4b">Eₖ</text>
+<rect x="420" y="27" width="145" height="52" rx="9" fill="#eee6fa" stroke="#9d84bf"/><text x="492" y="58" font-size="18" text-anchor="middle" fill="#5c3987">C₁ = T</text>
+<rect x="15" y="162" width="145" height="52" rx="9" fill="#dceafa" stroke="#90b7dc"/><text x="87" y="193" font-size="17" text-anchor="middle" fill="#154e7c">M ⊕ T</text>
+<circle cx="287" cy="188" r="25" fill="#fff1d9" stroke="#d9a96a"/><text x="287" y="196" text-anchor="middle" font-size="26" fill="#76561c">⊕</text>
+<rect x="420" y="162" width="145" height="52" rx="9" fill="#e1f2eb" stroke="#82ad9a"/><text x="492" y="193" text-anchor="middle" font-size="18" fill="#1f6a4b">Eₖ</text>
+<rect x="633" y="162" width="170" height="52" rx="9" fill="#fbe3e0" stroke="#d49086"/><text x="718" y="193" font-size="17" text-anchor="middle" fill="#a0312b">Tag = T again!</text>
+<g fill="none" stroke="#486b86" stroke-width="2.5" marker-end="url(#arr2)"><path d="M160 53H213"/><path d="M360 53H418"/><path d="M492 79V120H287V161"/><path d="M160 188H261"/><path d="M312 188H418"/><path d="M565 188H631"/></g>
+<text x="397" y="116" font-size="14" fill="#52677a">T = C₁</text><text x="347" y="179" font-size="13" fill="#52677a">XOR result = M</text>
+</svg>
+<p class="note"><strong>Why this matters:</strong> The attacker did not break AES or discover the secret key. The weakness is in the way basic CBC-MAC authenticates different message lengths under a single key. This is an example of existential forgery.</p>
+</section>
+<section><h2>4. Worked numerical example (toy cipher)</h2>
+<p>For a small, transparent calculation, use a <strong>4-bit teaching cipher</strong>:</p>
+<div class="formula">E(x) = (5x + 3) mod 16</div>
+<p>This is a reversible permutation on 4-bit values, <strong>not a secure encryption algorithm</strong>. It only illustrates the CBC-MAC algebra.</p>
+<table><thead><tr><th>Step</th><th>Calculation</th><th>Result</th></tr></thead><tbody>
+<tr><td>Original one-block message</td><td>M = 6</td><td>6 (0110₂)</td></tr>
+<tr><td>Original tag</td><td>T = E(6) = (5×6+3) mod 16</td><td>1 (0001₂)</td></tr>
+<tr><td>Forged second block</td><td>M ⊕ T = 6 ⊕ 1</td><td>7 (0111₂)</td></tr>
+<tr><td>First chaining output</td><td>C₁ = E(6)</td><td>1</td></tr>
+<tr><td>Second cipher input</td><td>7 ⊕ C₁ = 7 ⊕ 1</td><td>6</td></tr>
+<tr><td>Final tag</td><td>C₂ = E(6)</td><td>1</td></tr>
+</tbody></table>
+<div class="warning"><strong>Result:</strong> The one-block message <code>[6]</code> and the new two-block message <code>[6, 7]</code> both authenticate with tag <code>1</code>. The same type of length-extension forgery applies to basic CBC-MAC built from a secure block cipher.</div>
+</section>
+<section><h2>5. How to defend against variable-length forgeries</h2>
+<table><thead><tr><th>Approach</th><th>Explanation</th></tr></thead><tbody>
+<tr><td><strong>AES-CMAC (recommended)</strong></td><td>A standardized CBC-MAC variant that uses derived subkeys and different final-block treatment so variable-length messages can be securely authenticated.</td></tr>
+<tr><td><strong>Unambiguous length prefix</strong></td><td>Authenticate an encoding that includes the message length before CBC processing, using a rigorously specified construction with unambiguous padding. Do not improvise a protocol.</td></tr>
+<tr><td><strong>Fixed-length protocol</strong></td><td>Use basic CBC-MAC only in a properly analyzed context where all messages authenticated under a key have the same fixed length.</td></tr>
+<tr><td><strong>HMAC</strong></td><td>A hash-based MAC designed for variable-length messages.</td></tr>
+</tbody></table>
+<p class="success"><strong>Practical choice:</strong> For a block-cipher-based MAC, use <strong>AES-CMAC</strong> rather than implementing basic CBC-MAC yourself. If encryption and authentication are both required, consider an authenticated-encryption mode such as AES-GCM or AES-CCM, with its nonce rules enforced.</p>
+</section>
+<section><h2>6. CBC-MAC vs. CMAC</h2>
+<table><thead><tr><th>Characteristic</th><th>Basic CBC-MAC</th><th>AES-CMAC</th></tr></thead><tbody>
+<tr><td>Underlying primitive</td><td>Block cipher (e.g., AES)</td><td>Block cipher (e.g., AES)</td></tr>
+<tr><td>Chaining</td><td>CBC with zero IV</td><td>CBC-like processing with zero initial state</td></tr>
+<tr><td>Variable-length messages</td><td>Not secure without extra protections</td><td>Designed to support them</td></tr>
+<tr><td>Special final block</td><td>No</td><td>Yes, using subkey K₁ or K₂</td></tr>
+<tr><td>Recommended for new designs</td><td>No</td><td>Yes, where a MAC is needed</td></tr>
+</tbody></table>
+</section>
+<section><h2>7. Student review questions</h2>
+<ol class="q"><li>What is the role of the zero initialization value in CBC-MAC?</li><li>Why is basic CBC-MAC secure only under restricted message-length assumptions?</li><li>If a one-block message <code>M</code> has tag <code>T</code>, write a new two-block message that produces the same tag.</li><li>Prove algebraically why that forgery succeeds.</li><li>Why does the forgery not imply that AES is broken?</li><li>What feature of CMAC makes it suitable for variable-length messages?</li></ol>
+<h2>References</h2>
+<ul><li><a href="https://csrc.nist.gov/pubs/sp/800/38/b/upd1/final">NIST SP 800-38B — Recommendation for Block Cipher Modes of Operation: CMAC</a></li><li><a href="https://www.nist.gov/publications/fast-and-secure-cbc-type-mac-algorithms">NIST — Fast and Secure CBC Type MAC Algorithms</a></li><li><a href="https://www.cl.cam.ac.uk/teaching/1213/SecurityII/mgk/slides.pdf">University of Cambridge — Security II: Cryptography (CBC-MAC discussion)</a></li></ul>
+</section>
+</main></body></html>
