@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Is a Message Authentication Code Generated?</title>
+<style>
+:root{color-scheme:light;--ink:#17263b;--muted:#52657b;--blue:#1d4ed8;--border:#dce5ef;--surface:#f5f8fc}*{box-sizing:border-box}body{margin:0;background:#eef3f9;color:var(--ink);font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}.page{max-width:900px;margin:35px auto;padding:48px 54px;background:#fff;border-radius:14px;box-shadow:0 8px 38px #1b385516}h1{font-size:2.25rem;line-height:1.2;margin:.1em 0 .5em}h2{font-size:1.45rem;margin:1.9em 0 .5em;border-bottom:1px solid var(--border);padding-bottom:.3em}h3{font-size:1.12rem;margin:1.4em 0 .4em}p{margin:.65em 0}header .eyebrow{text-transform:uppercase;color:var(--blue);font-weight:700;font-size:.75rem;letter-spacing:.12em}header .lead{font-size:1.08rem;color:var(--muted)}.figure{border:1px solid var(--border);border-radius:12px;padding:18px;margin:20px 0;background:linear-gradient(180deg,#fff,#f9fbff)}.figure svg{display:block;max-width:580px;width:100%;height:auto;margin:auto}.caption{color:var(--muted);text-align:center;font-size:.86rem;margin-top:8px}.formula{background:var(--surface);border-left:4px solid var(--blue);padding:15px 18px;border-radius:5px;text-align:center;overflow-wrap:anywhere;font-family:Cambria,Georgia,serif;font-size:1.08rem}pre{background:#142439;color:#eaf3fc;border-radius:10px;padding:18px;overflow:auto;line-height:1.55;font-size:.89rem}code{font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace}p code,li code{color:#9b2957;background:#f5f0f6;padding:1px 4px;border-radius:4px}table{width:100%;border-collapse:collapse;font-size:.92rem;margin:17px 0}th,td{border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top}th{background:#eaf1fa;font-weight:700}tr:nth-child(even) td{background:#fafcff}.note{background:#eef7ff;border-left:4px solid #3b82f6;border-radius:6px;padding:13px 17px;margin:20px 0}.takeaway{padding:18px;border:1px solid #b8d9ca;border-radius:9px;background:#f0fbf5;margin-top:26px}ul,ol{padding-left:1.5em}.small{font-size:.85rem;color:var(--muted)}@media(max-width:700px){.page{margin:0;padding:25px 18px;border-radius:0}h1{font-size:1.85rem}table{font-size:.82rem}th,td{padding:7px}}@media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:0}pre{white-space:pre-wrap;overflow-wrap:anywhere}h2{break-after:avoid}.figure,table,pre{break-inside:avoid}}
+</style>
+</head>
+<body><main class="page">
+<header><div class="eyebrow">Cryptography • Teaching Tutorial</div><h1>How Is a Message Authentication Code (MAC) Generated?</h1><p class="lead">A message authentication code is a short cryptographic value generated using a message and a shared secret key.</p></header>
+<p>A <strong>Message Authentication Code (MAC)</strong> enables a receiver to verify:</p><ol><li><strong>Integrity:</strong> The message has not been altered.</li><li><strong>Authenticity:</strong> It was produced by someone holding the shared secret key.</li></ol>
+<p>A MAC does not encrypt the message or provide non-repudiation: both parties know the same secret key.</p>
+<h2>1. How a MAC is generated</h2><div class="formula"><strong>MAC = F(K, M)</strong></div><p>Here, <strong>K</strong> is the shared secret key, <strong>M</strong> is the original message, and <strong>F</strong> is a cryptographic MAC algorithm.</p>
+<div class="figure"><svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Message and shared secret key enter an HMAC algorithm to produce a message authentication tag">
+<rect x="20" y="28" width="225" height="72" rx="12" fill="#dceafe" stroke="#7294ce" stroke-width="2"/><text x="132" y="57" text-anchor="middle" font-size="20" font-weight="bold" fill="#183d69">Message (M)</text><text x="132" y="80" text-anchor="middle" font-size="16" fill="#183d69">Transfer $500</text>
+<rect x="20" y="151" width="225" height="72" rx="12" fill="#fde9d5" stroke="#d9a260" stroke-width="2"/><text x="132" y="180" text-anchor="middle" font-size="20" font-weight="bold" fill="#75430f">Secret Key (K)</text><text x="132" y="202" text-anchor="middle" font-size="16" fill="#75430f">Shared secret</text>
+<path d="M245 64 H300 V112 H350 M245 187 H300 V149 H350" fill="none" stroke="#64748b" stroke-width="3"/><path d="M338 104 L351 112 L338 120 M338 141 L351 149 L338 157" fill="none" stroke="#64748b" stroke-width="3"/>
+<rect x="352" y="94" width="260" height="75" rx="12" fill="#d9f2e7" stroke="#67a98c" stroke-width="2"/><text x="482" y="126" text-anchor="middle" font-size="21" font-weight="bold" fill="#15563f">MAC Algorithm</text><text x="482" y="151" text-anchor="middle" font-size="17" fill="#15563f">e.g., HMAC-SHA256</text>
+<path d="M482 170 V208" stroke="#64748b" stroke-width="3"/><path d="M473 199 L482 211 L491 199" fill="none" stroke="#64748b" stroke-width="3"/>
+<rect x="312" y="215" width="300" height="65" rx="12" fill="#e9e3fa" stroke="#a08ccc" stroke-width="2"/><text x="462" y="242" text-anchor="middle" font-size="19" font-weight="bold" fill="#503d8d">MAC / Authentication Tag</text><text x="462" y="261" text-anchor="middle" font-size="15" fill="#503d8d">Fixed-length cryptographic value</text>
+</svg><div class="caption">Both the message and secret key are inputs to the MAC algorithm.</div></div>
+<p>The sender transmits the message <em>along with</em> its MAC. The receiver computes a new MAC using the same key and checks whether the two authentication tags match.</p>
+<h2>2. HMAC-SHA256 example</h2><p><strong>HMAC</strong> stands for Hash-based Message Authentication Code. HMAC-SHA256 combines SHA-256 with a secret key.</p>
+<div class="formula">HMAC(K, M) = H((K′ ⊕ opad) ∥ H((K′ ⊕ ipad) ∥ M))</div>
+<ul><li><strong>H</strong>: SHA-256 hash function.</li><li><strong>K′</strong>: key normalized to SHA-256's 64-byte block size.</li><li><strong>ipad</strong>: byte <code>0x36</code> repeated 64 times.</li><li><strong>opad</strong>: byte <code>0x5C</code> repeated 64 times.</li><li><strong>⊕</strong>: bitwise XOR.</li><li><strong>∥</strong>: concatenation.</li></ul><p>The full HMAC-SHA256 tag is <strong>256 bits (32 bytes)</strong>.</p>
+<h3>Python example</h3><pre><code>import hmac
+import hashlib
+
+message = b"Transfer $500"
+secret_key = b"my_shared_secret_key"
+
+mac = hmac.new(
+    secret_key,
+    message,
+    hashlib.sha256
+).hexdigest()
+
+print("MAC:", mac)</code></pre><p>The program prints the hexadecimal encoding of the tag. Changing even one byte of the message will normally produce a dramatically different tag.</p><div class="note"><strong>Production note:</strong> Use securely generated, sufficiently strong random keys. The hard-coded key above is only for illustration.</div>
+<h2>3. How the receiver verifies a MAC</h2><p>Alice sends Bob:</p><pre><code>Message: Transfer $500
+MAC:     &lt;HMAC-SHA256 result&gt;</code></pre><p>Bob independently computes:</p><div class="formula">MAC<sub>Bob</sub> = HMAC(K, M)</div><p>Bob compares the calculated tag with the received tag. A match means the message passes MAC authentication; a mismatch means it must be rejected. Software should use a <strong>constant-time comparison</strong>, such as Python's <code>hmac.compare_digest()</code>.</p>
+<h2>4. Common MAC algorithms</h2><table><thead><tr><th>Algorithm</th><th>Underlying construction</th><th>Typical tag</th></tr></thead><tbody><tr><td>HMAC-SHA256</td><td>SHA-256 hash function</td><td>256 bits</td></tr><tr><td>HMAC-SHA512</td><td>SHA-512 hash function</td><td>512 bits</td></tr><tr><td>AES-CMAC</td><td>AES block cipher</td><td>128 bits</td></tr><tr><td>GMAC</td><td>Galois-field authentication</td><td>Up to 128 bits</td></tr><tr><td>Poly1305</td><td>Polynomial-based authenticator</td><td>128 bits</td></tr></tbody></table><p>Not all MAC algorithms are based on hash functions.</p>
+<h2>5. Why a MAC alone cannot prevent replay attacks</h2><p>Consider an authenticated banking request:</p><pre><code>Message: Transfer $500
+MAC:     ABC123... (illustrative)</code></pre><p>An attacker who captures the request can retransmit the <em>same message and tag</em>. The MAC still verifies because neither the authenticated content nor its MAC has changed.</p><p><strong>Solution:</strong> Include a nonce or sequence number <em>inside the authenticated data</em>, and reject reused values.</p><pre><code>Message: Transfer $500
+Nonce:   847291
+
+MAC = HMAC(secret_key, Message || Nonce)</code></pre><p>Bob checks both that the MAC is valid and that nonce <code>847291</code> has not already been used. The receiver must maintain suitable nonce or sequence-number state for this protection to work.</p>
+<h2>6. MAC vs. Hash vs. Digital Signature</h2><table><thead><tr><th>Property</th><th>Hash</th><th>MAC</th><th>Digital signature</th></tr></thead><tbody><tr><td>Uses a secret/private key</td><td>No</td><td>Yes, shared secret</td><td>Yes, private key</td></tr><tr><td>Detects message modification</td><td>Yes, against accidental changes</td><td>Yes</td><td>Yes</td></tr><tr><td>Authenticates sender</td><td>No</td><td>Authenticates key holder</td><td>Authenticates private-key holder</td></tr><tr><td>Provides non-repudiation</td><td>No</td><td>No</td><td>Can support it</td></tr><tr><td>Prevents replay on its own</td><td>No</td><td>No</td><td>No</td></tr></tbody></table>
+<div class="takeaway"><strong>Key takeaway:</strong> A MAC is not simply a hash of a message. It uses <strong>both a secret key and the message</strong> to produce an authentication tag.<div class="formula" style="margin-top:12px">SHA-256(M) ≠ HMAC-SHA256(K, M)</div><p class="small">SHA-256 is an unkeyed hash function; HMAC-SHA256 is a keyed authentication construction.</p></div>
+</main></body></html>
