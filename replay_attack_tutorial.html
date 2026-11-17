@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Replay Attacks — Cybersecurity Tutorial</title>
+<style>
+:root{color-scheme:light;--ink:#17283e;--muted:#536378;--accent:#1761a0;--line:#dce5ee;--bg:#f4f8fc}*{box-sizing:border-box}body{margin:0;background:var(--bg);font:16px/1.65 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--ink)}main{max-width:950px;margin:36px auto;padding:38px 48px;background:white;box-shadow:0 8px 32px #17345114;border-radius:16px}h1{font-size:2.35rem;margin:0}h2{margin:40px 0 12px;font-size:1.45rem;border-bottom:1px solid var(--line);padding-bottom:8px}p{margin:12px 0}header p{font-size:1.1rem;color:var(--muted)}.tag{display:inline-block;background:#e4f2ff;color:#15598e;padding:2px 12px;border-radius:99px;font-size:.8rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}svg{width:100%;height:auto;display:block;margin:16px 0}.diagram{background:#f8fafc;padding:18px;border:1px solid var(--line);border-radius:12px}.diagram figcaption{text-align:center;color:var(--muted);font-size:.88rem}.callout{border-left:4px solid var(--accent);background:#edf6ff;padding:14px 20px;border-radius:0 8px 8px 0;margin:20px 0}pre{overflow:auto;background:#122235;color:#e5f5ff;padding:20px;border-radius:10px;font-size:.94rem;line-height:1.55}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}table{border-collapse:collapse;width:100%;margin:18px 0}th,td{padding:12px 14px;text-align:left;border:1px solid var(--line);vertical-align:top}th{background:#eaf2fa}tr:nth-child(even) td{background:#fafcfe}li{margin:7px 0}.takeaway{font-size:1.1rem;font-weight:600;background:#eef8f4;border:1px solid #b6ded0;border-radius:12px;padding:20px;margin-top:24px}@media(max-width:600px){main{margin:0;padding:24px 18px;border-radius:0}h1{font-size:1.9rem}table{font-size:.87rem}th,td{padding:9px}}@media print{body{background:white}main{margin:0;box-shadow:none;max-width:none;padding:0}h2{break-after:avoid}pre,table,.diagram{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<header><span class="tag">Network Security · Cryptography</span><h1>Understanding Replay Attacks</h1><p>How captured, legitimate messages can be reused — and how secure protocols stop them.</p></header>
+<p>A <strong>replay attack</strong> is an attack in which an adversary <strong>captures a legitimate message or authentication request and retransmits it later</strong>, hoping a receiver will treat the old message as a fresh, valid request. The attacker need not decrypt or modify the message.</p>
+<h2>1. How a replay attack works</h2>
+<figure class="diagram"><svg viewBox="0 0 760 285" role="img" aria-label="Alice sends a valid request to Bob. Eve captures it and later replays the same request to Bob.">
+<rect x="22" y="30" width="155" height="65" rx="12" fill="#deecfb" stroke="#6494bf"/><text x="99" y="56" text-anchor="middle" font-size="20" font-weight="700" fill="#17283e">Alice</text><text x="99" y="77" text-anchor="middle" font-size="14" fill="#43546a">Legitimate user</text>
+<rect x="585" y="30" width="155" height="65" rx="12" fill="#dcf4e6" stroke="#75b48e"/><text x="662" y="56" text-anchor="middle" font-size="20" font-weight="700" fill="#17283e">Bob</text><text x="662" y="77" text-anchor="middle" font-size="14" fill="#43546a">Server</text>
+<rect x="301" y="201" width="155" height="65" rx="12" fill="#fce4e4" stroke="#cd8383"/><text x="378" y="227" text-anchor="middle" font-size="20" font-weight="700" fill="#17283e">Eve</text><text x="378" y="248" text-anchor="middle" font-size="14" fill="#43546a">Attacker</text>
+<defs><marker id="green" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#20804d"/></marker><marker id="amber" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#b97716"/></marker><marker id="red" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#c34040"/></marker></defs>
+<path d="M177 64 H578" stroke="#20804d" stroke-width="4" marker-end="url(#green)"/><text x="380" y="50" text-anchor="middle" font-size="17" fill="#17623a">1. Valid request</text>
+<path d="M380 72 V192" stroke="#b97716" stroke-width="3" stroke-dasharray="9 7" marker-end="url(#amber)"/><text x="393" y="146" font-size="16" fill="#89590d">2. Capture</text>
+<path d="M456 234 H650 V105" fill="none" stroke="#c34040" stroke-width="4" marker-end="url(#red)"/><text x="555" y="224" text-anchor="middle" font-size="16" fill="#a72b2b">3. Replay</text>
+</svg><figcaption>A valid request is recorded and sent again. A vulnerable server may accept it twice.</figcaption></figure>
+<ol><li><strong>Alice</strong> sends a legitimate authentication or transaction request to <strong>Bob</strong>, the server.</li><li><strong>Eve</strong> intercepts or records the message.</li><li>Eve retransmits the captured message.</li><li>If Bob cannot distinguish old messages from new ones, he may accept the repeated request.</li></ol>
+<h2>2. Example: Online banking</h2><p>Suppose Alice sends an authenticated instruction to her bank:</p>
+<pre><code>From: Alice
+To: Bank
+Action: Transfer $500 to Account X
+Authentication: Valid MAC</code></pre>
+<p>Eve captures and replays this request three more times. Without replay protection or transaction deduplication, the bank might execute additional transfers.</p>
+<div class="callout"><strong>Why isn't a MAC enough?</strong> A valid message authentication code (MAC) protects authenticity and integrity, but by itself it does <strong>not</strong> prove that a request is fresh or has not been processed before.</div>
+<h2>3. Defenses against replay attacks</h2>
+<table><thead><tr><th>Defense</th><th>How it helps</th></tr></thead><tbody>
+<tr><td><strong>Nonce</strong></td><td>A unique one-time value can identify reused requests when the receiver verifies it and rejects duplicates.</td></tr>
+<tr><td><strong>Timestamp</strong></td><td>Limits a request's lifetime. Duplicate detection is still necessary during the allowed time window.</td></tr>
+<tr><td><strong>Sequence number</strong></td><td>Allows the receiver to detect repeated or out-of-window messages.</td></tr>
+<tr><td><strong>Challenge-response</strong></td><td>Requires the client to authenticate a newly issued challenge rather than reuse an old response.</td></tr>
+<tr><td><strong>Unique transaction ID</strong></td><td>Supports deduplication so repeated requests do not execute the same transaction twice.</td></tr>
+</tbody></table>
+<h2>4. Example: A nonce with an HMAC</h2>
+<pre><code>Message: Transfer $500
+Nonce: 847291
+MAC: HMAC(secret_key, Message || Nonce)</code></pre>
+<p>Bob validates the HMAC and checks whether nonce <code>847291</code> has already been accepted:</p>
+<ul><li><strong>First request:</strong> Accepted; nonce is recorded.</li><li><strong>Second request with the same nonce:</strong> Rejected.</li><li><strong>Third request with the same nonce:</strong> Rejected.</li></ul>
+<p>The receiver must keep appropriate state and handle concurrent requests atomically. A nonce without receiver-side freshness validation is not sufficient.</p>
+<h2>5. Replay attack vs. man-in-the-middle attack</h2>
+<table><thead><tr><th>Replay attack</th><th>Man-in-the-middle (MITM) attack</th></tr></thead><tbody>
+<tr><td>Records and reuses previously valid messages.</td><td>Intercepts or positions itself between communicating parties.</td></tr>
+<tr><td>Does not require altering the message.</td><td>May relay, observe, or modify communications, depending on the protection in place.</td></tr>
+<tr><td>Exploits missing message-freshness or duplicate checks.</td><td>Exploits weaknesses in channel authentication or communication security.</td></tr>
+</tbody></table>
+<p>A replay attack may be performed as part of a MITM attack, but the two concepts are not identical.</p>
+<div class="takeaway">Key takeaway: Encryption protects confidentiality; a MAC protects integrity and message authenticity. Neither automatically establishes freshness. Anti-replay protections require explicit protocol mechanisms such as nonces, sequence numbers, challenge-response, or replay detection.</div>
+</main></body></html>
