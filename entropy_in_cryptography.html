@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entropy in Information Theory and Cryptography</title>
+<style>
+:root{color-scheme:light;--ink:#162434;--muted:#536577;--teal:#087e84;--light:#e9f6f5;--line:#dbe4ea;--paper:#fff}
+*{box-sizing:border-box}body{margin:0;background:#f3f6f8;color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}main{max-width:900px;margin:36px auto;padding:48px 58px;background:var(--paper);box-shadow:0 8px 32px #16243410;border-radius:12px}h1{font-size:2.2rem;line-height:1.2;margin:0 0 22px;color:#123b49}h2{font-size:1.35rem;color:#126875;margin:34px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line)}h3{font-size:1.05rem;margin:22px 0 7px}p{margin:9px 0 15px}ul,ol{padding-left:28px}li{margin:3px 0}.lead{font-size:1.12rem}.math{padding:13px 18px;margin:14px auto;background:#f5f9fa;border-left:4px solid var(--teal);border-radius:4px;overflow-x:auto;text-align:center;font:1.12rem/1.75 Georgia,"Times New Roman",serif}.math strong{color:#075b66}table{border-collapse:collapse;width:100%;margin:14px 0 22px}th,td{padding:11px 13px;text-align:left;border:1px solid var(--line)}th{background:var(--light);color:#124b53}tr:nth-child(even) td{background:#fafcfd}.note{border:1px solid #c4e5e2;background:#f0f9f8;padding:14px 18px;border-radius:7px;margin:18px 0}.chart{margin:18px 0;padding:18px 12px;border:1px solid var(--line);border-radius:8px}.chart svg{display:block;width:100%;max-width:670px;height:auto;margin:auto}.caption{color:var(--muted);font-size:.89rem;text-align:center;margin:6px 0 0}.muted{color:var(--muted)}@media(max-width:680px){main{margin:0;padding:24px 20px;border-radius:0}h1{font-size:1.8rem}}@media print{body{background:#fff}main{margin:0;padding:0;max-width:none;box-shadow:none}h2,h3,.chart,table{break-inside:avoid}h2{break-after:avoid}}
+</style>
+</head>
+<body><main>
+<h1>Entropy in Information Theory and Cryptography</h1>
+<p class="lead"><strong>Entropy is a measure of uncertainty, randomness, or unpredictability.</strong> Its precise meaning depends on the field, including information theory, cryptography, and thermodynamics.</p>
+<p>In cryptography, entropy describes how difficult it is for an attacker to predict a secret value, such as a password, encryption key, or random number.</p>
+<h2>1. Entropy in Information Theory</h2>
+<p>Claude Shannon introduced information entropy as a mathematical measure of uncertainty:</p>
+<div class="math"><strong>H(X) = −∑<sub>i=1</sub><sup>n</sup> p<sub>i</sub> log<sub>2</sub>(p<sub>i</sub>)</strong></div>
+<ul><li><em>H(X)</em>: Entropy measured in bits.</li><li><em>p<sub>i</sub></em>: Probability of outcome <em>i</em>.</li><li><em>n</em>: Number of possible outcomes.</li></ul>
+<p>Higher entropy means greater uncertainty about the outcome.</p>
+<h3>Example 1: Flipping a fair coin</h3>
+<p>A fair coin has two equally likely outcomes: Heads, P(H) = 0.5; Tails, P(T) = 0.5.</p>
+<div class="math">H(X) = −[0.5 log<sub>2</sub>(0.5) + 0.5 log<sub>2</sub>(0.5)]<br><strong>H(X) = 1 bit</strong></div>
+<p>A fair coin flip produces one bit of entropy.</p>
+<h3>Example 2: Flipping a biased coin</h3>
+<p>Suppose Heads has probability 0.9 and Tails has probability 0.1.</p>
+<div class="math">H(X) = −[0.9 log<sub>2</sub>(0.9) + 0.1 log<sub>2</sub>(0.1)]<br><strong>H(X) ≈ 0.469 bits</strong></div>
+<p>The biased coin has less entropy because its outcome is more predictable.</p>
+<div class="chart">
+<svg viewBox="0 0 650 290" role="img" aria-label="Binary entropy curve, increasing from zero at probability zero to one bit at probability one half, then decreasing to zero at probability one">
+ <text x="325" y="23" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#163d48" text-anchor="middle">Binary entropy versus probability of heads</text>
+ <line x1="72" y1="238" x2="615" y2="238" stroke="#526879" stroke-width="1.4"/><line x1="72" y1="46" x2="72" y2="238" stroke="#526879" stroke-width="1.4"/>
+ <g stroke="#dae6e8" stroke-dasharray="4 4"><line x1="72" y1="142" x2="615" y2="142"/><line x1="72" y1="46" x2="615" y2="46"/></g>
+ <g font-size="13" font-family="Arial,sans-serif" fill="#445767" text-anchor="end"><text x="61" y="242">0</text><text x="61" y="146">0.5</text><text x="61" y="50">1.0</text></g>
+ <g font-size="13" font-family="Arial,sans-serif" fill="#445767" text-anchor="middle"><text x="72" y="257">0</text><text x="208" y="257">0.25</text><text x="344" y="257">0.5</text><text x="479" y="257">0.75</text><text x="615" y="257">1</text></g>
+ <text x="344" y="283" text-anchor="middle" font-size="14" fill="#425b65" font-family="Arial,sans-serif">Probability of heads</text>
+ <text x="18" y="144" text-anchor="middle" transform="rotate(-90 18 144)" font-size="14" fill="#425b65" font-family="Arial,sans-serif">Entropy (bits)</text>
+ <path id="entropy-curve" d="" fill="none" stroke="#087e84" stroke-width="4" stroke-linecap="round"/>
+ <circle cx="343.5" cy="46" r="5" fill="#087e84"/><text x="345" y="39" text-anchor="middle" fill="#075b66" font-size="12" font-family="Arial,sans-serif">Maximum: 1 bit</text>
+</svg><p class="caption">Entropy reaches its maximum when Heads and Tails are equally likely.</p></div>
+<h2>2. Entropy in Cryptography</h2>
+<p>Cryptographic security depends heavily on unpredictable values, including:</p>
+<ul><li>Encryption keys</li><li>Nonces</li><li>Initialization vectors (IVs), when unpredictability is required</li><li>Passwords</li><li>Session secrets</li><li>Random seeds</li></ul>
+<p>If each of the 2<sup>128</sup> possible 128-bit keys is equally likely, then:</p>
+<div class="math">H(K) = log<sub>2</sub>(2<sup>128</sup>) = <strong>128 bits</strong><br>2<sup>128</sup> ≈ 3.4 × 10<sup>38</sup> possible keys</div>
+<p><strong>A 128-bit value does not necessarily contain 128 bits of entropy.</strong> For example, a 128-bit string that is always all zeros has zero entropy.</p>
+<h2>3. Password Entropy</h2>
+<p>Assume each character is independently and uniformly selected from an allowed alphabet.</p>
+<h3>Eight lowercase letters</h3>
+<div class="math">N = 26<sup>8</sup><br>H = log<sub>2</sub>(26<sup>8</sup>) = 8 log<sub>2</sub>(26)<br><strong>H ≈ 37.6 bits</strong></div>
+<h3>Twelve printable ASCII characters</h3>
+<div class="math">H = 12 log<sub>2</sub>(94)<br><strong>H ≈ 78.7 bits</strong></div>
+<p>These estimates apply to truly random character choices. Human-selected passwords usually contain less entropy because of predictable words and patterns.</p>
+<h2>4. Shannon Entropy vs. Min-Entropy</h2>
+<p>Shannon entropy measures average uncertainty:</p>
+<div class="math">H(X) = −∑ p<sub>i</sub> log<sub>2</sub>(p<sub>i</sub>)</div>
+<p>Min-entropy focuses on the probability of the most likely outcome:</p>
+<div class="math"><strong>H<sub>∞</sub>(X) = −log<sub>2</sub>(max<sub>i</sub> p<sub>i</sub>)</strong></div>
+<p>For a coin that lands Heads with probability 0.9:</p>
+<div class="math">H<sub>∞</sub>(X) = −log<sub>2</sub>(0.9) ≈ <strong>0.152 bits</strong></div>
+<table><thead><tr><th>Distribution</th><th>Shannon entropy</th><th>Min-entropy</th></tr></thead><tbody><tr><td>Fair coin (50/50)</td><td>1 bit</td><td>1 bit</td></tr><tr><td>Biased coin (90/10)</td><td>0.469 bits</td><td>0.152 bits</td></tr><tr><td>Certain outcome (100/0)</td><td>0 bits</td><td>0 bits</td></tr></tbody></table>
+<p>Min-entropy is useful when evaluating an attacker's best single guess and in assessing cryptographic random-number generation.</p>
+<h2>5. Why Entropy Matters in Cryptography</h2>
+<h3>Method A: Secure random generation</h3>
+<p>A cryptographically secure random number generator produces a uniformly distributed 256-bit AES key.</p>
+<div class="math"><strong>H(K) = 256 bits</strong></div>
+<h3>Method B: Predictable generation</h3>
+<p>A program derives a 256-bit key from a timestamp with only one million possible values.</p>
+<div class="math">H(K) ≤ log<sub>2</sub>(1,000,000) ≈ <strong>19.93 bits</strong></div>
+<p>An attacker could potentially test all one million possible seeds.</p>
+<div class="note"><strong>Important:</strong> Key length is not the same as key entropy.</div>
+<h2>6. Entropy and Cryptographic Hash Functions</h2>
+<p>SHA-256 always returns a 256-bit digest. However, hashing cannot increase the Shannon entropy of a deterministic input:</p>
+<div class="math">Y = SHA256(X)<br><strong>H(Y) ≤ H(X)</strong></div>
+<p>If X has 20 bits of entropy, SHA-256(X) cannot contain more than 20 bits of Shannon entropy, despite its 256-bit output.</p>
+<p>This matters in password hashing, key derivation, and random-number generation. Hashing can redistribute existing uncertainty, but cannot create new uncertainty from a deterministic input.</p>
+<h2>Key Takeaways</h2>
+<ol><li>Entropy measures uncertainty or unpredictability.</li><li>In information theory and cryptography, entropy is measured in bits.</li><li>Uniform distributions maximize entropy for a fixed number of possible outcomes.</li><li>A long password or encryption key does not necessarily have high entropy.</li><li>Deterministic hashing cannot add entropy to an input.</li><li>Min-entropy is useful when evaluating the best single-guess probability.</li></ol>
+<p class="note"><strong>Core principle:</strong> Random-looking data is not necessarily unpredictable data. Cryptographic systems need sufficient entropy in their underlying secrets, not merely outputs that appear random.</p>
+</main>
+<script>
+(function(){const points=[];for(let i=0;i<=200;i++){const p=i/200;const h=(p===0||p===1)?0:-(p*Math.log2(p)+(1-p)*Math.log2(1-p));const x=72+p*543,y=238-h*192;points.push((i===0?'M':'L')+x.toFixed(2)+' '+y.toFixed(2))}document.getElementById('entropy-curve').setAttribute('d',points.join(' '));})();
+</script>
+</body></html>
