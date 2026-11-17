@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PKI Certificate Chain</title>
+<style>
+:root{--ink:#17273a;--muted:#53657a;--line:#d8e2ec;--blue:#145d9c;--pale:#eef5fc;--green:#176348;--cream:#fff5e3;--red:#8f302e}*{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:var(--ink);font:16px/1.65 system-ui,-apple-system,Segoe UI,Arial,sans-serif}.page{max-width:1050px;margin:30px auto;padding:50px 65px;background:#fff;box-shadow:0 10px 35px #26344913;border-radius:16px}h1{font-size:2.3rem;line-height:1.15;margin:0 0 8px;color:#153955}h2{font-size:1.46rem;color:#134d79;border-bottom:1px solid var(--line);padding-bottom:8px;margin:40px 0 17px}h3{font-size:1.1rem;color:#18466b;margin:22px 0 8px}.lead{font-size:1.13rem;color:#35485b}.eyebrow{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:#526c85;font-weight:750}.callout{padding:14px 18px;background:var(--pale);border-left:4px solid var(--blue);border-radius:6px;margin:17px 0}.warning{background:#fff5e9;border-left-color:#bd711c}.danger{background:#fff1f0;border-left-color:#ae4039}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}code{background:#edf2f7;padding:2px 5px;border-radius:4px;font-size:.91em}pre{background:#132638;color:#eef8ff;border-radius:10px;padding:18px 20px;overflow-x:auto;font-size:.89rem;line-height:1.6}pre code{background:none;padding:0;color:inherit}table{border-collapse:collapse;width:100%;margin:14px 0 22px;font-size:.95rem}th,td{text-align:left;border:1px solid var(--line);padding:11px 13px;vertical-align:top}th{background:#edf4fa;color:#194668}tr:nth-child(even) td{background:#fafcfe}ul,ol{padding-left:25px}li{margin:7px 0}.formula{font-family:Georgia,serif;background:#f1f5fa;padding:14px;text-align:center;border-radius:8px;font-size:1.13em;overflow-x:auto}.figure{border:1px solid var(--line);border-radius:13px;background:#fbfdff;padding:15px 12px;margin:18px 0}.figcaption{text-align:center;color:var(--muted);font-size:.85rem;margin:5px 0 0}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:15px}.panel{border:1px solid var(--line);border-radius:10px;padding:14px 18px;background:#fcfdff}.small{font-size:.9em;color:var(--muted)}.tag{display:inline-block;color:#195a83;background:#e9f3fc;border:1px solid #c9dfef;padding:2px 8px;border-radius:99px;font-size:.8em;font-weight:650}.step{display:flex;gap:12px;margin:11px 0}.num{flex:none;background:#1c689e;color:#fff;border-radius:50%;width:27px;height:27px;display:grid;place-items:center;font-weight:750;font-size:.85rem}.step p{margin:0}svg text{font-family:system-ui,Segoe UI,Arial,sans-serif}@media(max-width:750px){.page{margin:0;border-radius:0;padding:26px 20px}.twocol{grid-template-columns:1fr}h1{font-size:1.8rem}}@media print{body{background:#fff}.page{margin:0;padding:10mm 13mm;max-width:none;box-shadow:none}h2,h3{break-after:avoid}.figure,pre,table,.callout{break-inside:avoid}a{color:#153955}}
+</style></head><body><main class="page">
+<div class="eyebrow">Public Key Infrastructure · Cryptography</div><h1>PKI Certificate Chain</h1><p class="lead">A PKI certificate chain links a server's or user's public-key certificate to a trusted certificate authority (CA). Each link is checked so that a client can decide whether a public key belongs to the identity it intends to communicate with.</p>
+<div class="callout"><strong>Core idea:</strong> A certificate is not trusted merely because it contains a digital signature. Trust depends on a valid chain of signatures ending at an accepted <em>trust anchor</em>, plus certificate-purpose, identity, validity, and other policy checks.</div>
+<h2>1. The three main certificate roles</h2>
+<div class="figure"><svg viewBox="0 0 880 420" role="img" aria-label="Certificate hierarchy: root CA signs intermediate CA, which signs website leaf certificate; client trusts root in a local trust store" width="100%">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="#416b8e"/></marker></defs>
+<rect x="305" y="13" width="270" height="78" rx="13" fill="#e4f1ff" stroke="#3b79ad" stroke-width="2"/><text x="440" y="42" text-anchor="middle" font-weight="750" fill="#164e7d" font-size="20">Root CA</text><text x="440" y="63" text-anchor="middle" fill="#365e7e" font-size="14">Trust anchor (locally trusted)</text><text x="440" y="80" text-anchor="middle" fill="#365e7e" font-size="12">Usually self-signed</text>
+<rect x="305" y="157" width="270" height="78" rx="13" fill="#e9f6f0" stroke="#36926b" stroke-width="2"/><text x="440" y="189" text-anchor="middle" font-weight="750" fill="#186249" font-size="20">Intermediate CA</text><text x="440" y="211" text-anchor="middle" fill="#40745f" font-size="14">CA certificate signed by root</text>
+<rect x="305" y="302" width="270" height="82" rx="13" fill="#fff3e5" stroke="#cb8a38" stroke-width="2"/><text x="440" y="334" text-anchor="middle" font-weight="750" fill="#865413" font-size="20">Leaf Certificate</text><text x="440" y="356" text-anchor="middle" fill="#8b5f2b" font-size="14">Example: www.example.com</text><text x="440" y="373" text-anchor="middle" fill="#8b5f2b" font-size="12">Contains server public key</text>
+<path d="M440 92V155" fill="none" stroke="#416b8e" stroke-width="2.5" marker-end="url(#arr)"/><text x="460" y="124" fill="#416b8e" font-size="15">Signs</text><path d="M440 236V300" fill="none" stroke="#416b8e" stroke-width="2.5" marker-end="url(#arr)"/><text x="460" y="270" fill="#416b8e" font-size="15">Signs</text>
+<rect x="20" y="17" width="240" height="74" rx="10" fill="#f2f4fa" stroke="#9aaabc"/><text x="140" y="44" text-anchor="middle" font-weight="700" font-size="17" fill="#364b64">Client Trust Store</text><text x="140" y="66" text-anchor="middle" font-size="13" fill="#596c81">OS / browser / application</text><path d="M260 54H303" stroke="#416b8e" stroke-width="2.4" marker-end="url(#arr)"/><text x="277" y="44" fill="#416b8e" text-anchor="middle" font-size="11">Trust</text>
+<rect x="615" y="295" width="240" height="88" rx="10" fill="#f4f7fa" stroke="#9caebf"/><text x="735" y="321" text-anchor="middle" fill="#355b7c" font-size="15" font-weight="700">TLS Server</text><text x="735" y="343" text-anchor="middle" fill="#536a81" font-size="13">Usually sends leaf +</text><text x="735" y="362" text-anchor="middle" fill="#536a81" font-size="13">intermediate cert(s)</text><path d="M615 342H576" stroke="#416b8e" stroke-width="2.4" marker-end="url(#arr)"/>
+</svg><p class="figcaption">The arrows indicate certificate issuance/signing; they do not mean the private keys are shared.</p></div>
+<table><thead><tr><th>Certificate</th><th>Purpose</th><th>Typical location</th></tr></thead><tbody><tr><td><strong>Root CA</strong></td><td>Top-level trust anchor, often signs intermediates rather than end-entity certificates.</td><td>Preinstalled or explicitly trusted in a trust store.</td></tr><tr><td><strong>Intermediate CA</strong></td><td>Delegated authority that can sign leaf certificates and possibly other intermediates.</td><td>Usually delivered by the server or obtained during path building.</td></tr><tr><td><strong>Leaf (end-entity)</strong></td><td>Binds an identity (e.g., DNS name) to a public key, subject to certified usages.</td><td>Presented by the TLS server.</td></tr></tbody></table>
+<h2>2. What is inside an X.509 certificate?</h2>
+<p>An X.509 certificate contains signed <em>to-be-signed certificate</em> (TBSCertificate) data and a signature by its issuer. Relevant fields/extensions include:</p>
+<table><thead><tr><th>Field or extension</th><th>What it tells the validator</th></tr></thead><tbody>
+<tr><td>Subject / Subject Alternative Name (SAN)</td><td>Identities; TLS hostnames are matched against the DNS names in SAN.</td></tr>
+<tr><td>Issuer</td><td>Identity of the CA purported to have issued the certificate.</td></tr>
+<tr><td>Subject Public Key Info</td><td>The public key and its algorithm.</td></tr>
+<tr><td>Validity period</td><td><code>notBefore</code> and <code>notAfter</code> times.</td></tr>
+<tr><td>Basic Constraints</td><td><code>CA:TRUE</code> for issuing CAs; <code>CA:FALSE</code> for ordinary leaf certificates. May limit subordinate CA depth.</td></tr>
+<tr><td>Key Usage / Extended Key Usage</td><td>Authorized uses such as <code>keyCertSign</code> for CAs or <code>serverAuth</code> for TLS servers.</td></tr>
+<tr><td>Authority/Subject Key Identifiers</td><td>Help identify potential issuing certificates; do not replace signature checks.</td></tr>
+<tr><td>Signature Algorithm / Signature</td><td>Issuer's cryptographic signature over the certificate contents.</td></tr>
+</tbody></table>
+<h2>3. How certificate-chain validation works</h2>
+<div class="step"><div class="num">1</div><p><strong>Build a candidate certification path.</strong> Starting from the leaf, locate its issuing intermediate(s) up to a configured trust anchor. A server often sends leaf and intermediates, but normally not the root.</p></div>
+<div class="step"><div class="num">2</div><p><strong>Verify signatures.</strong> Check the leaf's signature using its issuer's public key, then the intermediate's signature using its issuer's public key, and so on. The trust anchor itself is accepted according to local trust configuration, not simply because it self-signed.</p></div>
+<div class="step"><div class="num">3</div><p><strong>Enforce CA constraints.</strong> Issuing certificates must be authorized as CAs; validate <code>basicConstraints</code>, <code>keyUsage</code>, path-length constraints, name constraints, and relevant policies as applicable.</p></div>
+<div class="step"><div class="num">4</div><p><strong>Check certificate dates and algorithms.</strong> Reject expired or not-yet-valid certificates, and reject disallowed cryptographic algorithms or insufficient key strengths according to policy.</p></div>
+<div class="step"><div class="num">5</div><p><strong>Check the intended identity and purpose.</strong> For HTTPS, ensure the requested DNS hostname matches a SAN entry and the certificate is suitable for TLS server authentication.</p></div>
+<div class="step"><div class="num">6</div><p><strong>Apply revocation and application policy.</strong> Evaluate CRLs, OCSP, stapled status, or browser-specific mechanisms when required by the client and environment. Revocation behavior varies across clients.</p></div>
+<div class="step"><div class="num">7</div><p><strong>Authenticate the connection endpoint.</strong> During TLS, the server must demonstrate possession of the corresponding private key (for example, with TLS 1.3 <code>CertificateVerify</code>). A valid certificate by itself does not show that the peer owns the key.</p></div>
+<div class="callout"><strong>Certificate verification ≠ data decryption:</strong> CA signatures authenticate the binding between identity and public key. TLS then uses an authenticated key exchange and symmetric traffic keys to protect application data.</div>
+<h2>4. Worked HTTPS example</h2>
+<p>A browser connects to <code>https://www.example.com</code>. Imagine the server presents:</p>
+<pre><code>Leaf:          DNS=www.example.com
+  Issuer:      Example Issuing CA
+  Signed by:   Example Issuing CA private key
+
+Intermediate:  Example Issuing CA
+  Issuer:      Example Root CA
+  Signed by:   Example Root CA private key
+
+Root anchor:   Example Root CA
+  Trusted locally in browser/OS trust store</code></pre>
+<p>The client checks both issuer signatures, certificate constraints, validity dates, the DNS name <code>www.example.com</code>, suitable server authentication usage, and local trust/revocation policies. In TLS, the server additionally proves possession of its private key.</p>
+<div class="formula">Verify(pk<sub>issuer</sub>, TBS<sub>certificate</sub>, signature) = true</div>
+<p class="small">This is a conceptual signature-verification expression. The exact inputs and verification rules depend on the X.509 signature algorithm.</p>
+<h2>5. Why use intermediate CAs?</h2>
+<ul><li><strong>Protect the root:</strong> A root private key can be kept offline while intermediate keys handle day-to-day issuance.</li><li><strong>Delegate responsibility:</strong> Different intermediates can support different certificate types, customers, and policies.</li><li><strong>Limit operational damage:</strong> A compromised intermediate can be revoked or replaced without necessarily replacing the root, though remediation can be complex.</li><li><strong>Control path depth:</strong> Constraints can limit which certificates an intermediate may issue.</li></ul>
+<h2>6. Common certificate-chain failures</h2>
+<table><thead><tr><th>Failure</th><th>Reason</th><th>Typical response</th></tr></thead><tbody>
+<tr><td>Unknown issuer / untrusted root</td><td>No acceptable path reaches a locally trusted root.</td><td>Reject unless trust is established through an authorized process.</td></tr>
+<tr><td>Missing intermediate</td><td>Client cannot obtain a necessary issuing certificate.</td><td>Configure server to send the correct intermediate chain.</td></tr>
+<tr><td>Hostname mismatch</td><td>The requested DNS name is not in the appropriate SAN.</td><td>Use a certificate for the actual hostname.</td></tr>
+<tr><td>Expired / not yet valid</td><td>Current time falls outside certificate validity.</td><td>Renew or correct issuance/time configuration.</td></tr>
+<tr><td>Not a valid CA</td><td>Issuer lacks required CA authorization or signing usage.</td><td>Issue from an appropriately constrained CA.</td></tr>
+<tr><td>Revoked certificate</td><td>Status signals invalidation under relevant revocation policy.</td><td>Replace affected certificate and investigate.</td></tr>
+<tr><td>Weak signature or key</td><td>Client security policy does not permit algorithm/key size.</td><td>Replace with policy-compliant cryptography.</td></tr>
+</tbody></table>
+<h2>7. Chain building nuances</h2>
+<div class="twocol"><div class="panel"><h3>Cross-signing</h3><p>The same CA public key can be certified by different issuers, creating alternative paths. Clients may build different valid chains depending on trust stores and path-building rules.</p></div><div class="panel"><h3>Trust stores are local policy</h3><p>A private enterprise root may be accepted on managed devices yet rejected by public browsers. Being self-signed does not automatically make a root trustworthy.</p></div></div>
+<div class="warning callout"><strong>Certificate Transparency (CT):</strong> Many browsers require publicly trusted TLS certificates to satisfy CT policies. CT provides public auditability of issuance, but it does not substitute for certificate-chain validation.</div>
+<h2>8. Practical inspection commands</h2>
+<p>On a machine with OpenSSL, inspect the certificates presented by a server:</p>
+<pre><code>openssl s_client -connect www.example.com:443 \
+  -servername www.example.com -showcerts</code></pre>
+<p>Inspect a PEM certificate's subject, issuer, validity, SAN, and extensions:</p>
+<pre><code>openssl x509 -in server.pem -noout -text</code></pre>
+<p class="small">These commands inspect certificate details; a successful manual inspection is not equivalent to a complete browser policy evaluation. Use certificates from an authorized test endpoint.</p>
+<h2>9. PKI certificate chain vs. digital signature vs. TLS</h2>
+<table><thead><tr><th>Concept</th><th>Role</th></tr></thead><tbody>
+<tr><td>Digital signature</td><td>Cryptographically verifies signed data against a public key.</td></tr>
+<tr><td>PKI certificate chain</td><td>Establishes a trust path for binding identity to public key, subject to validation rules.</td></tr>
+<tr><td>TLS handshake</td><td>Authenticates endpoint(s) and negotiates keys for secure communications.</td></tr>
+<tr><td>Symmetric encryption / AEAD</td><td>Protects application data after key establishment.</td></tr>
+</tbody></table>
+<h2>10. Review questions</h2>
+<ol><li>Why does a browser normally trust a root CA without receiving it from the server?</li><li>Which public key verifies the signature on a leaf certificate?</li><li>Why does a valid signature alone not prove that <code>www.example.com</code> is authentic?</li><li>What is the difference between <code>CA:TRUE</code> and <code>serverAuth</code>?</li><li>How does an intermediate CA reduce operational exposure of a root CA?</li><li>Why can a server with a valid leaf certificate still fail chain validation?</li><li>What is the distinction between verifying the certificate chain and proving possession of the leaf private key during TLS?</li><li>How could cross-signing produce two different valid paths to trust anchors?</li></ol>
+<div class="callout"><strong>Key takeaway:</strong> A PKI chain establishes trust in a public-key identity by linking leaf and intermediate certificates to an accepted trust anchor. A secure client must validate the whole path, the intended hostname and purpose, applicable policies, and the peer's possession of the private key.</div>
+</main></body></html>
