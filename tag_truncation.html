@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tag Truncation in Cryptography</title>
+<style>
+:root{--ink:#17243a;--muted:#526477;--line:#d9e2ed;--blue:#155eaa;--pale:#edf5fe;--green:#e2f4e8;--red:#fbe5e5}*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:var(--ink);font:16px/1.65 system-ui,-apple-system,Segoe UI,Arial,sans-serif}main{max-width:960px;margin:32px auto;padding:48px 56px;background:white;box-shadow:0 8px 35px #18304d12;border-radius:14px}h1{font-size:2.15rem;line-height:1.2;margin:0 0 8px;color:#123459}h2{font-size:1.42rem;margin:35px 0 10px;color:#174e82;border-bottom:1px solid var(--line);padding-bottom:8px}h3{font-size:1.08rem;margin:20px 0 8px}.lead{font-size:1.1rem}.subtitle{color:var(--muted);margin:0 0 30px}p{margin:10px 0 14px}.formula{background:var(--pale);border-left:4px solid var(--blue);padding:17px 20px;margin:18px 0;font-size:1.1rem;text-align:center;font-family:Cambria,Georgia,serif}.diagram{border:1px solid var(--line);border-radius:12px;padding:23px;margin:20px 0;background:#fcfdff}.tag{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:clamp(12px,1.8vw,17px);letter-spacing:.015em;word-break:break-all}.original{background:#eff4fa;padding:14px 17px;border-radius:8px}.tag-row{display:flex;flex-wrap:wrap;margin-top:7px}.kept{background:var(--green);padding:10px 12px;color:#145a36;font-weight:650}.discard{background:var(--red);padding:10px 12px;text-decoration:line-through;color:#963d3d}.arrow{text-align:center;font-size:27px;color:var(--blue);margin:4px 0}.small{font-size:.9rem;color:var(--muted)}table{width:100%;border-collapse:collapse;margin:17px 0 23px;font-size:.96rem}th,td{border:1px solid var(--line);padding:11px 12px;vertical-align:top;text-align:left}th{background:#eaf2fb;color:#183e62}tr:nth-child(even) td{background:#fbfcff}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}pre{overflow-x:auto;background:#17253b;color:#f3f7fd;border-radius:8px;padding:18px;line-height:1.55}ul,ol{padding-left:25px}li{margin:6px 0}.note{border-left:4px solid #b97923;background:#fff8ec;padding:14px 18px;margin:20px 0}.key{border-top:2px solid var(--line);margin-top:30px;padding-top:14px;font-weight:650}@media(max-width:650px){body{background:#fff}main{padding:23px 18px;margin:0;box-shadow:none;border-radius:0}h1{font-size:1.75rem}table{font-size:.82rem}th,td{padding:8px 7px}}@media print{body{background:white}main{margin:0;padding:0;max-width:none;box-shadow:none}h2,.diagram,table,pre{break-inside:avoid}a{color:inherit}}
+</style>
+</head>
+<body><main>
+<h1>Tag Truncation in Cryptography</h1>
+<p class="subtitle">Message Authentication Codes · HMAC · CMAC · CCM · GCM</p>
+<p class="lead"><strong>Tag truncation</strong> means shortening a message authentication code (MAC) or authentication tag by retaining a specified number of bits and discarding the rest. It reduces communication and storage overhead, but also lowers the resistance to forgery.</p>
+<h2>1. How tag truncation works</h2>
+<p>Suppose AES-GCM produces a 128-bit (16-byte) authentication tag. A protocol may transmit the leftmost 96 bits (12 bytes) instead.</p>
+<div class="diagram" role="img" aria-label="A 128-bit hexadecimal tag is shortened to its first 96 bits; the last 32 bits are discarded.">
+<strong>Original authentication tag — 128 bits</strong>
+<div class="original tag">8F2A91B7C3D4E506A1B2C3D4E5F60718</div>
+<div class="arrow">↓</div>
+<p class="small" style="text-align:center">Keep the leftmost 96 bits (24 hexadecimal digits)</p>
+<div class="tag-row tag"><span class="kept">8F2A91B7C3D4E506A1B2C3D4</span><span class="discard">E5F60718</span></div>
+<p class="small">Green: 96 bits retained &nbsp; · &nbsp; Red: 32 bits discarded</p>
+</div>
+<div class="formula">T<sub>t</sub> = MSB<sub>t</sub>(T)</div>
+<p>Here, <strong>T</strong> is the full authentication tag, <strong>t</strong> is the required tag length in bits, and <strong>MSB<sub>t</sub></strong> means the leftmost t bits. The sender and receiver must agree on the truncation rule and tag length.</p>
+<h2>2. Why truncate authentication tags?</h2>
+<p>The principal advantage is <strong>efficiency</strong>. Shorter tags consume fewer bytes in a network packet, which can matter for low-bandwidth or resource-constrained devices.</p>
+<p>For a 20-byte message, ignoring other protocol headers and overhead:</p>
+<table><thead><tr><th>Tag length</th><th>Tag size</th><th>Message + tag</th></tr></thead><tbody><tr><td>128 bits</td><td>16 bytes</td><td>36 bytes</td></tr><tr><td>96 bits</td><td>12 bytes</td><td>32 bytes</td></tr><tr><td>64 bits</td><td>8 bytes</td><td>28 bytes</td></tr><tr><td>32 bits</td><td>4 bytes</td><td>24 bytes</td></tr></tbody></table>
+<h2>3. Security implications</h2>
+<p>For an ideal uniformly distributed <em>t</em>-bit authentication tag, a single independent random guess succeeds with approximate probability:</p>
+<div class="formula">P<sub>forge</sub> ≈ 1 / 2<sup>t</sup></div>
+<table><thead><tr><th>Tag length</th><th>Approximate success probability per random guess</th></tr></thead><tbody><tr><td>128 bits</td><td>1 / 2<sup>128</sup></td></tr><tr><td>96 bits</td><td>1 / 2<sup>96</sup></td></tr><tr><td>64 bits</td><td>1 / 2<sup>64</sup></td></tr><tr><td>32 bits</td><td>1 / 2<sup>32</sup></td></tr></tbody></table>
+<div class="note"><strong>Security caveat:</strong> These are simplified guessing probabilities, not complete security guarantees. Actual bounds also depend on the algorithm, number of verification attempts, message lengths, nonce management, key lifetime, and protocol constraints. In GCM, short tags require particularly strict limits.</div>
+<h2>4. How the receiver verifies a truncated tag</h2>
+<p>Suppose Alice and Bob share an HMAC key and agree to use the first 96 bits of HMAC-SHA256.</p>
+<pre>Message: Hello Bob
+Tag:     First 96 bits of HMAC-SHA256(K, Message)</pre>
+<ol><li>Alice computes the full HMAC-SHA256 tag.</li><li>Alice transmits the message and the first 96 bits of that tag.</li><li>Bob computes the full HMAC-SHA256 tag using the received message and shared key.</li><li>Bob extracts its first 96 bits and compares those bits with the received tag using a constant-time comparison.</li><li>Bob accepts the message only if the tags match and all other protocol checks pass.</li></ol>
+<p>Changing the agreed tag length is not merely a display preference: it changes the security level of the protocol.</p>
+<h2>5. Tag truncation in common algorithms</h2>
+<table><thead><tr><th>Algorithm</th><th>Full tag size</th><th>Truncation notes</th></tr></thead><tbody>
+<tr><td>HMAC-SHA256</td><td>256 bits</td><td>Truncation is supported; choose a tag length that meets the application's security requirements.</td></tr>
+<tr><td>AES-CMAC</td><td>128 bits</td><td>Truncation is supported, subject to suitable security parameters and usage limits.</td></tr>
+<tr><td>AES-CCM</td><td>128-bit internal CBC-MAC result</td><td>Standardized transmitted tag lengths: 32, 48, 64, 80, 96, 112, or 128 bits.</td></tr>
+<tr><td>AES-GCM</td><td>128 bits</td><td>NIST-specified lengths: 128, 120, 112, 104, 96, and restricted 64- or 32-bit cases. Short tags are not general-purpose defaults.</td></tr>
+</tbody></table>
+<p>For general-purpose AES-GCM applications, a <strong>128-bit tag</strong> is a sound default. Do not arbitrarily truncate a tag unless the specific protocol and implementation support that length and its security limits.</p>
+<h2>6. Does truncation change encryption?</h2>
+<p><strong>No.</strong> In an authenticated-encryption mode such as AES-GCM, the encryption operation itself remains unchanged when only the authentication tag is shortened.</p>
+<ul><li><strong>Confidentiality:</strong> AES Counter Mode protects plaintext from disclosure under the required security assumptions.</li><li><strong>Integrity and authenticity:</strong> The authentication tag allows the receiver to detect forged or modified messages.</li><li><strong>Truncation:</strong> Transmits fewer authentication bits, reducing forgery resistance.</li></ul>
+<p>Although encryption computations are unchanged, weakening authentication can undermine the security of the overall authenticated-encryption system.</p>
+<h2>7. Review questions</h2>
+<ol><li>What does MSB<sub>96</sub>(T) mean when T is a 128-bit tag?</li><li>How many bytes are saved by shortening a tag from 128 bits to 64 bits?</li><li>Why does truncating a MAC tag increase forgery risk?</li><li>Does truncating the tag change AES-CTR encryption in GCM?</li><li>Why are 32-bit GCM tags unsuitable as a general-purpose default?</li></ol>
+<p class="key">Key takeaway: Shorter authentication tags reduce bandwidth and storage costs, but make successful forgery attempts more likely. Choose tag sizes according to the cryptographic algorithm, protocol requirements, and usage limits.</p>
+</main></body></html>
