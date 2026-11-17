@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Why HMAC-SHA256 Resists Length Extension Attacks</title>
+<style>
+:root{--ink:#17263a;--muted:#53657a;--teal:#087d83;--light:#e9f5f4;--line:#d7e2ea;--paper:#fff;--bg:#f4f7fa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.65}.page{max-width:970px;margin:32px auto;padding:48px 58px;background:var(--paper);box-shadow:0 4px 28px #18293b12}h1{font-size:2.15rem;line-height:1.2;color:#123c50;margin:0 0 14px}h2{font-size:1.4rem;color:#126b74;margin-top:36px;border-bottom:2px solid var(--line);padding-bottom:7px}h3{font-size:1.1rem;color:#174a66;margin:23px 0 8px}p{margin:11px 0}ul,ol{padding-left:24px}li{margin:6px 0}.lede{font-size:1.1rem;color:#314d5b}.callout{border-left:5px solid var(--teal);background:var(--light);padding:16px 20px;margin:22px 0;border-radius:0 8px 8px 0}.math{font-family:Georgia,'Times New Roman',serif;font-size:1.13rem;text-align:center;background:#f6f9fb;border:1px solid var(--line);padding:15px 8px;margin:15px 0;overflow-wrap:anywhere}.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;margin:20px 0;padding:18px;background:#f7fbfc;border:1px solid var(--line);border-radius:10px}.step{padding:11px 16px;border:1px solid #94c6ca;background:#e7f4f5;border-radius:8px;text-align:center;font-weight:bold}.arrow{font-size:1.5rem;color:var(--teal)}.flow-note{font-size:.89rem;text-align:center;color:var(--muted);margin-top:-10px}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}.panel{border:1px solid var(--line);border-radius:8px;padding:15px;background:#f9fbfd}.panel h3{margin-top:0}code,pre{font-family:Consolas,Monaco,monospace}code{background:#eff3f6;padding:1px 4px;border-radius:3px}pre{background:#192c3a;color:#f2f7fc;padding:16px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}pre code{background:none;padding:0;color:inherit}table{border-collapse:collapse;width:100%;margin:18px 0}th,td{border:1px solid #ccd9e2;padding:10px 13px;text-align:left;vertical-align:top}th{background:#eaf3f6;color:#143e52}tr:nth-child(even) td{background:#fbfcfd}.small{font-size:.92rem;color:var(--muted)}.summary{border:2px solid #74b4b6;padding:18px 20px;border-radius:10px;margin-top:24px;background:#f7fcfb}@media(max-width:650px){.page{margin:0;padding:26px 19px}.two-col{grid-template-columns:1fr}h1{font-size:1.75rem}}@media print{body{background:#fff}.page{box-shadow:none;margin:0;max-width:none;padding:20px 30px}h2,h3{break-after:avoid}pre,.math,.panel,.callout{break-inside:avoid}}
+</style>
+</head>
+<body><main class="page">
+<h1>Why HMAC-SHA256 Is Secure Against Length Extension Attacks</h1>
+<p class="lede"><strong>Core idea:</strong> HMAC-SHA256 resists the standard SHA-256 length extension attack because it does not publish the inner hash state that processes the secret-key-derived prefix and the message. The public tag is produced by a separate, keyed outer hash.</p>
+<h2>1. What Is a Length Extension Attack?</h2>
+<p>SHA-256 uses a Merkle–Damgård construction. It processes 512-bit (64-byte) message blocks while maintaining a 256-bit chaining state. Its final digest corresponds to the final chaining state after the original message and SHA-256 padding have been processed.</p>
+<div class="flow"><span class="step">Block 1</span><span class="arrow">→</span><span class="step">Block 2</span><span class="arrow">→</span><span class="step">Block 3</span><span class="arrow">→</span><span class="step">Final digest</span></div>
+<p class="flow-note">Simplified SHA-256 block processing: each compression step updates the chaining state.</p>
+<p>Consider an insecure secret-prefix MAC:</p>
+<div class="math">T = SHA256(K ∥ M)</div>
+<p>Here <strong>K</strong> is a secret key, <strong>M</strong> is a message, <strong>T</strong> is the public tag, and <strong>∥</strong> means concatenation. An attacker who knows <em>M</em> and <em>T</em> can exploit the revealed final SHA-256 state to continue hashing, without recovering <em>K</em>.</p>
+<ol><li>Obtain the original message <em>M</em> and tag <em>T</em>.</li><li>Guess the secret-key length.</li><li>Construct the SHA-256 padding <em>P</em> appropriate for <em>K ∥ M</em>.</li><li>Use <em>T</em> as the chaining state for continuing SHA-256.</li><li>Process attacker-chosen additional bytes <em>X</em>, accounting for the number of bytes already processed.</li><li>Produce a valid tag for the extended message <em>M ∥ P ∥ X</em>.</li></ol>
+<div class="math">T′ = SHA256(K ∥ M ∥ P ∥ X)</div>
+<p><strong>Important:</strong> The forged transmitted message contains the SHA-256 padding bytes between <em>M</em> and <em>X</em>. Exploitation at the application level depends on whether the server accepts and meaningfully interprets those bytes.</p>
+<h2>2. The HMAC-SHA256 Construction</h2>
+<div class="math">HMAC(K, M) = H((K′ ⊕ opad) ∥ H((K′ ⊕ ipad) ∥ M))</div>
+<p>For HMAC-SHA256, <em>H</em> denotes SHA-256 and <em>K′</em> is the key normalized to SHA-256's 64-byte block size. If the original key exceeds 64 bytes, SHA-256 first hashes it; the resulting bytes are padded with zero bytes to 64 bytes. Keys of at most 64 bytes are zero-padded to that length.</p>
+<table><thead><tr><th>Component</th><th>Meaning</th></tr></thead><tbody><tr><td>H</td><td>SHA-256</td></tr><tr><td>K′</td><td>64-byte normalized key</td></tr><tr><td>ipad</td><td>Byte 0x36 repeated 64 times</td></tr><tr><td>opad</td><td>Byte 0x5C repeated 64 times</td></tr><tr><td>⊕</td><td>Bitwise XOR</td></tr><tr><td>Inner digest</td><td>32 bytes (256 bits)</td></tr><tr><td>HMAC-SHA256 tag</td><td>32 bytes (256 bits), before optional truncation</td></tr></tbody></table>
+<div class="two-col"><div class="panel"><h3>Step 1: Inner hash</h3><div class="math">I = H((K′ ⊕ ipad) ∥ M)</div><p>Hashes the inner key-derived prefix followed by the message.</p></div><div class="panel"><h3>Step 2: Outer hash</h3><div class="math">T = H((K′ ⊕ opad) ∥ I)</div><p>Hashes a different key-derived prefix followed by the fixed-length inner digest.</p></div></div>
+<div class="flow"><span class="step">K′ ⊕ ipad<br>+ message</span><span class="arrow">→</span><span class="step">Inner<br>SHA-256</span><span class="arrow">→</span><span class="step">Inner digest I<br>(hidden)</span></div>
+<div class="flow"><span class="step">K′ ⊕ opad<br>+ inner digest I</span><span class="arrow">→</span><span class="step">Outer<br>SHA-256</span><span class="arrow">→</span><span class="step">Public tag T</span></div>
+<p>The public sees <em>T</em>, not the inner digest <em>I</em>.</p>
+<h2>3. Why Length Extension Does Not Forge an HMAC</h2>
+<h3>Reason 1: The relevant inner state is hidden</h3>
+<p>With <code>SHA256(K ∥ M)</code>, the public tag is precisely the final state needed to continue hashing an extended message. With HMAC, the inner digest <em>I = H((K′ ⊕ ipad) ∥ M)</em> is not released. The attacker sees only <em>H((K′ ⊕ opad) ∥ I)</em>, which does not reveal <em>I</em> in any practical way under standard cryptographic assumptions.</p>
+<h3>Reason 2: Extending the outer hash is not a valid HMAC computation</h3>
+<p>An attacker can conceptually perform a SHA-256 continuation from the public outer digest. If <em>P<sub>o</sub></em> is padding for the outer input, such a continuation computes a digest corresponding to:</p>
+<div class="math">H((K′ ⊕ opad) ∥ I ∥ P<sub>o</sub> ∥ X)</div>
+<p>But a valid HMAC for the extended message <em>M′</em> requires:</p>
+<div class="math">T′ = H((K′ ⊕ opad) ∥ H((K′ ⊕ ipad) ∥ M′))</div>
+<p>These are different expressions. HMAC's outer hash always receives a <strong>32-byte inner digest</strong> after the 64-byte outer key-derived block. Appending bytes to the outer hash input cannot substitute for recalculating the inner digest over the extended message.</p>
+<h3>Reason 3: The inner and outer computations use distinct key-derived prefixes</h3>
+<div class="math">K<sub>i</sub> = K′ ⊕ ipad &nbsp;&nbsp;&nbsp; K<sub>o</sub> = K′ ⊕ opad</div>
+<p>The two different pads separate the inner and outer hashing contexts. The outer digest cannot be reused as if it were the final state of the inner message-processing hash. This separation supports HMAC's security, but the length extension defense arises from the <em>complete nested design</em>, not merely from XORing with two constants.</p>
+<h2>4. Concrete Authentication Example</h2>
+<p>Suppose the server has the secret key <code>SECRETKEY</code> and authenticates the message <code>user=alice&amp;role=user</code>.</p>
+<h3>Case A: Insecure secret-prefix MAC</h3>
+<pre><code>SHA256("SECRETKEY" || "user=alice&amp;role=user")</code></pre>
+<p>Using the tag as SHA-256's final state, an attacker can attempt to authenticate:</p>
+<pre><code>user=alice&amp;role=user || SHA256_padding || &amp;role=admin</code></pre>
+<p>This can yield a valid forged hash tag if the correct key length is used. Whether this creates a security breach depends on the application's parsing rules and handling of repeated fields.</p>
+<h3>Case B: HMAC-SHA256</h3>
+<pre><code>HMAC_SHA256("SECRETKEY", "user=alice&amp;role=user")</code></pre>
+<p>A valid tag for the changed message would have to be computed as:</p>
+<pre><code>HMAC_SHA256("SECRETKEY", "user=alice&amp;role=user&amp;role=admin")</code></pre>
+<p>The attacker cannot derive this tag by length-extending the original HMAC tag. Inserting SHA-256 padding before the new text does not fix the problem because the correct inner HMAC digest still has to be calculated.</p>
+<h2>5. Comparison</h2>
+<table><thead><tr><th>Property</th><th>SHA256(K ∥ M)</th><th>HMAC-SHA256</th></tr></thead><tbody><tr><td>Underlying SHA-256</td><td>Yes</td><td>Yes</td></tr><tr><td>Secret key</td><td>Yes</td><td>Yes</td></tr><tr><td>Nested hashing</td><td>No</td><td>Yes</td></tr><tr><td>Relevant message-processing state exposed</td><td>Yes</td><td>No</td></tr><tr><td>Ordinary length extension forgery</td><td>Possible</td><td>Not possible</td></tr><tr><td>Recommended MAC design</td><td>No</td><td>Yes, with secure keys and implementation</td></tr></tbody></table>
+<h2>6. Does HMAC Change SHA-256's Internal Properties?</h2>
+<p><strong>No.</strong> SHA-256 itself retains the Merkle–Damgård length extension property. HMAC's nested, keyed structure prevents attackers from turning that property into a valid message-authentication forgery. An outer-hash extension can still be calculated mathematically, but it is not the HMAC of a longer message.</p>
+<h2>7. What If the Attacker Knows the Key Length and SHA-256 Padding?</h2>
+<p>Even if the attacker knows the original message, tag, key length, padding rule, compression algorithm, <code>ipad</code>, and <code>opad</code>, the standard attack still fails. The secret-derived inner hashing state is not exposed, and the final outer digest does not supply it.</p>
+<h2>8. Security Limitations of HMAC-SHA256</h2>
+<ul><li><strong>Weak keys:</strong> Low-entropy keys may be guessed or brute-forced.</li><li><strong>Key compromise:</strong> Anyone with the key can produce valid tags.</li><li><strong>Replay:</strong> HMAC does not itself prevent an old, valid authenticated message from being replayed. Protocols may need nonces, timestamps, or sequence numbers.</li><li><strong>Excessive tag truncation:</strong> Very short tags reduce forgery resistance; sensible truncation lengths should be chosen for the protocol.</li><li><strong>Implementation mistakes:</strong> Incorrect verification, timing leaks in comparisons, ambiguous message encodings, and poor key management can undermine security.</li></ul>
+<p>HMAC's security is analyzed under assumptions about the underlying hash and its compression function; it is not adequately characterized by collision resistance alone.</p>
+<h2>9. Final Summary</h2>
+<div class="summary"><p><strong>Insecure design:</strong></p><div class="math">T = H(K ∥ M)</div><p>The public digest exposes the state necessary to continue hashing with correctly constructed padding.</p><p><strong>HMAC design:</strong></p><div class="math">T = H(K<sub>o</sub> ∥ H(K<sub>i</sub> ∥ M))</div><p><strong>HMAC-SHA256 resists length extension because the public tag is the output of a separate keyed outer hash—not the chaining state of the message-processing inner hash. Extending the outer digest cannot generate the correct inner digest for a modified message.</strong></p></div>
+</main></body></html>
