@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>HKDF: Extract and Expand</title>
+<style>
+:root{--ink:#182437;--muted:#52647a;--navy:#173f66;--blue:#e9f3ff;--green:#e7f6ed;--amber:#fff4df;--line:#dbe3ed;--bg:#f4f7fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 system-ui,-apple-system,Segoe UI,Arial,sans-serif}.page{max-width:1000px;margin:28px auto;padding:42px 54px;background:white;box-shadow:0 3px 24px #17314a12;border-radius:15px}h1{font-size:2.25rem;color:#113a63;line-height:1.15;margin:0 0 12px}h2{color:#164874;border-bottom:2px solid #dce8f4;padding-bottom:6px;margin-top:35px;font-size:1.4rem}h3{color:#24577e;margin-top:23px}p{margin:11px 0}strong{color:#153b5c}.subtitle{color:var(--muted);font-size:1.08rem;margin-bottom:25px}.summary{background:#edf5ff;border-left:5px solid #3476b8;padding:15px 19px;border-radius:7px}.note{background:var(--amber);border-left:4px solid #d29d3f;padding:14px 18px;border-radius:6px;margin:17px 0}.success{background:var(--green);border-left:4px solid #31976c;padding:14px 18px;border-radius:6px}.formula{background:#f4f8fd;border:1px solid #d9e4f2;padding:13px 16px;border-radius:8px;text-align:center;font:600 16px/1.9 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;margin:15px 0}code,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}code{background:#edf2f8;border-radius:3px;padding:1px 4px;font-size:.91em}pre{background:#142a40;color:#f4f8fb;padding:19px;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5;font-size:13px}pre code{padding:0;background:transparent;color:inherit}table{width:100%;border-collapse:collapse;margin:15px 0 22px;font-size:.95rem}th{background:#173f66;color:white;text-align:left}th,td{border:1px solid var(--line);padding:10px 12px;vertical-align:top}tbody tr:nth-child(even){background:#f5f8fc}.scroll{overflow-x:auto}.steps{padding-left:26px}.steps li{padding:4px 0}svg{display:block;max-width:100%;height:auto;margin:8px auto}a{color:#1366a5}.small{color:var(--muted);font-size:.9rem}.sectionnum{color:#5d7ea0;margin-right:5px}.hex{overflow-wrap:anywhere;word-break:break-word;font-family:ui-monospace,Consolas,monospace}.questions li{margin-bottom:7px}@media(max-width:650px){.page{margin:0;padding:25px 19px;border-radius:0}h1{font-size:1.8rem}h2{font-size:1.2rem}table{font-size:.83rem}th,td{padding:7px}pre{font-size:11px}}@media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:0;border-radius:0}h2,h3{break-after:avoid}pre,svg,table,.note{break-inside:avoid}a{color:inherit}}
+</style></head>
+<body><main class="page">
+<h1>HKDF: Extract and Expand</h1><p class="subtitle">HMAC-based Key Derivation Function · RFC 5869 · Cryptography</p>
+<div class="summary"><strong>HKDF</strong> converts input keying material (IKM) into one or more cryptographically strong, purpose-specific keys. Its two stages have distinct roles: <strong>Extract</strong> produces a pseudorandom key (PRK), and <strong>Expand</strong> produces output keying material (OKM) of the requested length.</div>
+<h2><span class="sectionnum">1.</span> Why do we need HKDF?</h2>
+<p>A key exchange, such as Diffie–Hellman, produces shared secret material, but applications often need several separate keys: an encryption key, a MAC key, or keys for opposite communication directions. Directly reusing the same raw secret for every purpose is poor key-management practice.</p><p>HKDF makes it possible to derive distinct keys from one secret using <strong>HMAC</strong> and optional context information (<code>info</code>). It does <strong>not</strong> add entropy to a weak secret or turn a low-entropy password into a secure key on its own.</p>
+<h2><span class="sectionnum">2.</span> The two-stage architecture</h2>
+<svg viewBox="0 0 840 255" role="img" aria-label="HKDF diagram: IKM and salt feed Extract, generating PRK; PRK, info and desired length feed Expand, generating output keying material">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0 L8 3 L0 6" fill="none" stroke="#46617a" stroke-width="1.7"/></marker></defs>
+<rect x="20" y="20" width="165" height="48" rx="9" fill="#e7f0ff" stroke="#7e9fc4"/><text x="102" y="39" text-anchor="middle" font-size="17" font-weight="bold" fill="#173f66">IKM</text><text x="102" y="56" text-anchor="middle" font-size="12" fill="#51657a">Input secret material</text>
+<rect x="20" y="107" width="165" height="48" rx="9" fill="#fff1d9" stroke="#d4a057"/><text x="102" y="127" text-anchor="middle" font-size="17" font-weight="bold" fill="#714912">Salt</text><text x="102" y="143" text-anchor="middle" font-size="12" fill="#714912">Optional, nonsecret</text>
+<rect x="235" y="58" width="155" height="72" rx="12" fill="#e6f5ed" stroke="#68a78b" stroke-width="1.6"/><text x="312" y="86" text-anchor="middle" font-size="21" font-weight="bold" fill="#18563e">Extract</text><text x="312" y="109" text-anchor="middle" font-size="14" fill="#18563e">HMAC(salt, IKM)</text>
+<rect x="438" y="75" width="112" height="52" rx="9" fill="#e4e8fc" stroke="#898dc4"/><text x="494" y="96" text-anchor="middle" font-size="18" font-weight="bold" fill="#343c81">PRK</text><text x="494" y="113" text-anchor="middle" font-size="12" fill="#343c81">HashLen bytes</text>
+<rect x="600" y="58" width="150" height="72" rx="12" fill="#e6f5ed" stroke="#68a78b" stroke-width="1.6"/><text x="675" y="85" text-anchor="middle" font-size="21" font-weight="bold" fill="#18563e">Expand</text><text x="675" y="107" text-anchor="middle" font-size="13" fill="#18563e">HMAC blocks</text>
+<rect x="605" y="168" width="140" height="48" rx="9" fill="#fff1d9" stroke="#d4a057"/><text x="675" y="187" text-anchor="middle" font-size="15" font-weight="bold" fill="#714912">info + L</text><text x="675" y="202" text-anchor="middle" font-size="11" fill="#714912">Context + key length</text>
+<rect x="768" y="66" width="65" height="57" rx="9" fill="#e7f0ff" stroke="#7e9fc4"/><text x="800" y="90" text-anchor="middle" font-size="18" font-weight="bold" fill="#173f66">OKM</text><text x="800" y="106" text-anchor="middle" font-size="11" fill="#173f66">Keys</text>
+<g stroke="#46617a" stroke-width="2" fill="none" marker-end="url(#arrow)"><path d="M185 44 H205 V78 H231"/><path d="M185 131 H210 V110 H231"/><path d="M390 95 H435"/><path d="M550 101 H597"/><path d="M675 168 V133"/><path d="M750 95 H764"/></g>
+<text x="312" y="179" text-anchor="middle" font-size="14" fill="#52647a">Stage 1: concentrate/normalize</text><text x="494" y="197" text-anchor="middle" font-size="14" fill="#52647a">Stage 2: derive context-specific bytes</text></svg>
+<h2><span class="sectionnum">3.</span> HKDF-Extract</h2>
+<div class="formula">PRK = HMAC-Hash(salt, IKM)</div>
+<table><thead><tr><th>Parameter</th><th>Meaning</th></tr></thead><tbody><tr><td><code>IKM</code></td><td>Input keying material, such as a Diffie–Hellman shared secret</td></tr><tr><td><code>salt</code></td><td>Optional nonsecret salt; if omitted, RFC 5869 uses <code>HashLen</code> zero bytes</td></tr><tr><td><code>PRK</code></td><td>Pseudorandom key; its length equals the hash output length</td></tr><tr><td><code>HashLen</code></td><td>Hash output size in bytes: 32 for SHA-256</td></tr></tbody></table>
+<p>For HKDF-SHA256, the Extract operation always produces a <strong>32-byte PRK</strong>, regardless of the desired final key length. In this HMAC call, the <em>salt is the HMAC key</em> and <em>IKM is the HMAC message</em>.</p>
+<div class="note"><strong>Salt is not a nonce.</strong> The salt need not be secret. A suitable independent salt strengthens extraction and separates uses. HKDF can work with an omitted salt, but the RFC recommends using a salt where practical.</div>
+<h2><span class="sectionnum">4.</span> HKDF-Expand</h2>
+<p>Expand uses the PRK as the HMAC key and generates enough blocks to fill the requested output length <code>L</code>.</p>
+<div class="formula">T(0) = empty string<br>T(i) = HMAC-Hash(PRK, T(i−1) || info || byte(i))<br>OKM = first L bytes of T(1) || T(2) || ... || T(N)<br>N = ceil(L / HashLen)</div>
+<p>The <code>byte(i)</code> counter is exactly <strong>one byte</strong>: <code>0x01</code>, <code>0x02</code>, etc. The first block has no previous-block bytes because <code>T(0)</code> is empty.</p>
+<svg viewBox="0 0 840 206" role="img" aria-label="HKDF Expand derives T1, then T2 incorporating T1, and concatenates and truncates blocks to L bytes">
+<defs><marker id="arrow2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6" fill="none" stroke="#496782" stroke-width="1.6"/></marker></defs>
+<rect x="20" y="9" width="165" height="44" rx="8" fill="#e8efff" stroke="#8fa5cf"/><text x="102" y="29" text-anchor="middle" font-weight="bold" font-size="15" fill="#243c77">PRK</text><text x="102" y="44" text-anchor="middle" font-size="11" fill="#243c77">HMAC key for all blocks</text>
+<rect x="20" y="87" width="165" height="44" rx="8" fill="#fff1d9" stroke="#d4a057"/><text x="102" y="105" text-anchor="middle" font-weight="bold" font-size="14" fill="#714912">info + counter</text><text x="102" y="120" text-anchor="middle" font-size="11" fill="#714912">0x01, 0x02, ...</text>
+<rect x="239" y="65" width="172" height="68" rx="9" fill="#e7f6ed" stroke="#68a78b"/><text x="325" y="92" text-anchor="middle" font-size="17" font-weight="bold" fill="#17573d">T(1)</text><text x="325" y="113" text-anchor="middle" font-size="12" fill="#17573d">HMAC(PRK, info || 01)</text>
+<rect x="468" y="65" width="192" height="68" rx="9" fill="#e7f6ed" stroke="#68a78b"/><text x="564" y="92" text-anchor="middle" font-size="17" font-weight="bold" fill="#17573d">T(2)</text><text x="564" y="113" text-anchor="middle" font-size="12" fill="#17573d">HMAC(PRK, T(1) || info || 02)</text>
+<rect x="692" y="65" width="140" height="68" rx="9" fill="#e7f0ff" stroke="#7e9fc4"/><text x="762" y="93" text-anchor="middle" font-size="17" font-weight="bold" fill="#173f66">OKM</text><text x="762" y="113" text-anchor="middle" font-size="11" fill="#173f66">join; truncate to L</text>
+<g fill="none" stroke="#496782" stroke-width="2" marker-end="url(#arrow2)"><path d="M185 29 H210 V82 H235"/><path d="M185 108 H235"/><path d="M411 99 H465"/><path d="M660 99 H688"/></g><text x="449" y="87" text-anchor="middle" font-size="11" fill="#52647a">T(1)</text><text x="426" y="162" text-anchor="middle" font-size="13" fill="#52647a">The previous T block feeds the next HMAC call.</text></svg>
+<p>For SHA-256, <code>HashLen = 32</code> bytes. If <code>L = 42</code> bytes, then <code>N = ceil(42/32) = 2</code>: produce 64 bytes from <code>T(1) || T(2)</code> and retain the first 42 bytes.</p>
+<div class="note"><strong>Output limit:</strong> RFC 5869 permits <code>L ≤ 255 × HashLen</code>. For HKDF-SHA256, the maximum output is <strong>8160 bytes</strong>. Output length is measured in bytes, not bits.</div>
+<h2><span class="sectionnum">5.</span> Worked example — RFC 5869, Test Case 1</h2>
+<p>This published test vector uses HKDF-SHA256 and requests a 42-byte output.</p>
+<table><thead><tr><th>Input</th><th>Value (hexadecimal)</th></tr></thead><tbody>
+<tr><td>IKM (22 bytes)</td><td class="hex">0b repeated 22 times</td></tr>
+<tr><td>salt (13 bytes)</td><td class="hex">000102030405060708090a0b0c</td></tr>
+<tr><td>info (10 bytes)</td><td class="hex">f0f1f2f3f4f5f6f7f8f9</td></tr>
+<tr><td>Requested length</td><td>42 bytes</td></tr>
+</tbody></table>
+<h3>Step A — Extract</h3>
+<div class="formula">PRK = HMAC-SHA256(salt, IKM)</div>
+<pre><code>PRK (32 bytes):
+077709362c2e32df0ddc3f0dc47bba63
+90b6c73bb50f9c3122ec844ad7c2b3e5</code></pre>
+<h3>Step B — Expand</h3>
+<div class="formula">T(1) = HMAC-SHA256(PRK, info || 0x01)<br>T(2) = HMAC-SHA256(PRK, T(1) || info || 0x02)</div>
+<pre><code>OKM (42 bytes):
+3cb25f25faacd57a90434f64d0362f2a
+2d2d0a90cf1a5a4c5db02d56ecc4c5bf
+34007208d5b887185865</code></pre>
+<p class="small">Values are from RFC 5869 Appendix A.1; the code below reproduces and verifies them.</p>
+<h2><span class="sectionnum">6.</span> Python: implement Extract and Expand</h2>
+<pre><code>import hashlib
+import hmac
+
+def hkdf_extract(salt: bytes | None, ikm: bytes) -> bytes:
+    hash_len = hashlib.sha256().digest_size
+    if salt is None:
+        salt = bytes(hash_len)
+    return hmac.new(salt, ikm, hashlib.sha256).digest()
+
+def hkdf_expand(prk: bytes, info: bytes, length: int) -> bytes:
+    hash_len = hashlib.sha256().digest_size
+    if len(prk) &lt; hash_len:
+        raise ValueError("PRK must be at least HashLen bytes")
+    if not (0 &lt;= length &lt;= 255 * hash_len):
+        raise ValueError("Invalid output length")
+    output = b""
+    previous = b""
+    for counter in range(1, (length + hash_len - 1) // hash_len + 1):
+        previous = hmac.new(
+            prk, previous + info + bytes([counter]), hashlib.sha256
+        ).digest()
+        output += previous
+    return output[:length]
+
+# RFC 5869 Appendix A.1
+ikm = bytes.fromhex("0b" * 22)
+salt = bytes.fromhex("000102030405060708090a0b0c")
+info = bytes.fromhex("f0f1f2f3f4f5f6f7f8f9")
+prk = hkdf_extract(salt, ikm)
+okm = hkdf_expand(prk, info, 42)
+
+assert prk.hex() == (
+    "077709362c2e32df0ddc3f0dc47bba63"
+    "90b6c73bb50f9c3122ec844ad7c2b3e5"
+)
+assert okm.hex() == (
+    "3cb25f25faacd57a90434f64d0362f2a"
+    "2d2d0a90cf1a5a4c5db02d56ecc4c5bf"
+    "34007208d5b887185865"
+)
+print("HKDF test vector passed")</code></pre>
+<div class="success"><strong>Implementation note:</strong> This code is for understanding the algorithm. Production applications should generally use a maintained cryptographic library’s HKDF implementation rather than maintaining custom cryptographic code.</div>
+<h2><span class="sectionnum">7.</span> Deriving different keys with <code>info</code></h2>
+<p>Keeping the same PRK but changing <code>info</code> derives different context-specific outputs:</p>
+<pre><code>encryption_key = hkdf_expand(prk, b"myapp/v1/encryption", 32)
+authentication_key = hkdf_expand(prk, b"myapp/v1/authentication", 32)</code></pre>
+<p>The labels help enforce <strong>domain separation</strong>, so keys intended for different purposes are distinct. Use unambiguous encodings for protocol identifiers, algorithms, key directions, and contexts; the sender and receiver must agree exactly on the <code>info</code> value.</p>
+<h2><span class="sectionnum">8.</span> Extract versus Expand</h2>
+<div class="scroll"><table><thead><tr><th>Property</th><th>Extract</th><th>Expand</th></tr></thead><tbody><tr><td>Purpose</td><td>Turn source key material into a pseudorandom key</td><td>Derive one or more context-specific output keys</td></tr><tr><td>HMAC key</td><td>Salt</td><td>PRK</td></tr><tr><td>HMAC input</td><td>IKM</td><td>Previous block + info + counter</td></tr><tr><td>Output</td><td>PRK</td><td>OKM</td></tr><tr><td>Output length</td><td>Exactly HashLen bytes</td><td>Requested L bytes, within the specified limit</td></tr></tbody></table></div>
+<h2><span class="sectionnum">9.</span> Security considerations and common mistakes</h2>
+<ul><li><strong>HKDF is not encryption:</strong> it derives keys; it does not encrypt or authenticate application messages.</li><li><strong>IKM must have sufficient secrecy and entropy:</strong> HKDF cannot rescue a guessable password. For passwords, use a password-hardening KDF such as Argon2id or scrypt instead.</li><li><strong>Protect the PRK and derived keys:</strong> they are cryptographic secrets. The salt and <code>info</code> need not be secret.</li><li><strong>Do not confuse salt with info:</strong> salt affects Extract; info binds application context during Expand.</li><li><strong>Use clear separation:</strong> different roles and traffic directions should have different <code>info</code> labels where the protocol requires distinct keys.</li><li><strong>Be aware of protocol variants:</strong> systems such as TLS 1.3 use HKDF-based labeled derivations, not just plain HKDF with arbitrary strings.</li></ul>
+<h2><span class="sectionnum">10.</span> Review questions</h2>
+<ol class="questions"><li>Why is HKDF divided into Extract and Expand stages?</li><li>In HKDF-Extract, which value is the HMAC key: <code>salt</code> or <code>IKM</code>?</li><li>How many bytes does HKDF-Extract produce when SHA-256 is used?</li><li>For HKDF-SHA256 and <code>L = 80</code>, how many Expand blocks are required?</li><li>What is the purpose of the <code>info</code> parameter?</li><li>Can HKDF make a low-entropy password resistant to offline password guessing? Explain.</li><li>Why is the maximum HKDF-Expand output for SHA-256 8160 bytes?</li></ol>
+<div class="success"><strong>Key takeaway:</strong> <code>Extract</code> produces a fixed-size pseudorandom key from IKM; <code>Expand</code> uses that key with <code>info</code> and a counter to derive the required amount of context-specific output keying material.</div>
+<h2>Reference</h2><p>H. Krawczyk and P. Eronen, <a href="https://www.rfc-editor.org/rfc/rfc5869" target="_blank" rel="noopener noreferrer">RFC 5869: HMAC-based Extract-and-Expand Key Derivation Function (HKDF)</a>, May 2010.</p>
+</main></body></html>
