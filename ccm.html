@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CCM — Counter with CBC-MAC</title>
+<style>
+:root{--ink:#172b45;--muted:#53677b;--blue:#155e95;--teal:#117e7b;--line:#d8e2ed;--bg:#f5f8fc;--light:#eaf4fa;--orange:#a96419}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);font:16px/1.65 system-ui,-apple-system,'Segoe UI',Arial,sans-serif;color:var(--ink)}main{max-width:980px;margin:32px auto 60px;background:#fff;padding:48px 60px;box-shadow:0 12px 45px #203b5b12;border:1px solid var(--line);border-radius:12px}h1{font-size:2.35rem;line-height:1.15;margin:0 0 12px;color:#102a47}h2{font-size:1.48rem;color:#154b78;margin:39px 0 12px;border-bottom:2px solid #d8eaf4;padding-bottom:7px}h3{font-size:1.12rem;color:#1b607e;margin:20px 0 6px}p{margin:10px 0 14px}.subtitle{font-size:1.13rem;color:var(--muted);margin:0 0 28px}.eyebrow{font-weight:700;letter-spacing:.09em;font-size:.78rem;color:var(--teal);text-transform:uppercase}.lead{font-size:1.09rem}.note{background:#eef6fa;border-left:4px solid #238ba9;padding:13px 17px;margin:17px 0;border-radius:4px}.warning{background:#fff5e9;border-left:4px solid #ce8b32;padding:13px 17px;margin:17px 0;border-radius:4px}.formula{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:#f1f5fa;border:1px solid #d9e4f0;padding:12px 15px;border-radius:6px;overflow-x:auto;margin:13px 0}.figure{border:1px solid var(--line);border-radius:10px;padding:20px 12px;background:#fcfeff}.figcaption{color:var(--muted);font-size:.86rem;text-align:center;margin:8px 0 0}pre{background:#14283e;color:#f0f5fb;padding:18px 20px;border-radius:8px;overflow-x:auto;font-size:.87rem;line-height:1.6}code{font-family:ui-monospace,Consolas,monospace}p code,li code,td code{background:#eef3f8;padding:1px 5px;border-radius:4px;font-size:.91em}table{border-collapse:collapse;width:100%;font-size:.94rem;margin:16px 0}th,td{text-align:left;vertical-align:top;padding:10px 12px;border:1px solid #dbe4ee}th{background:#e9f2f9;color:#153f62}tr:nth-child(even) td{background:#fafcfe}ul,ol{padding-left:24px}li{margin:6px 0}.pill{display:inline-block;background:#e1f3ee;color:#176c5d;border-radius:100px;padding:3px 11px;font-size:.82rem;font-weight:700}.small{font-size:.9rem;color:var(--muted)}.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.mini>div{padding:14px;border:1px solid var(--line);border-radius:8px;background:#f8fbfd}.mini strong{display:block;color:#155e95}@media(max-width:680px){main{margin:0;padding:25px 18px;border:0;border-radius:0}h1{font-size:1.95rem}.mini{grid-template-columns:1fr}table{font-size:.82rem}th,td{padding:7px}svg{max-width:100%}}@media print{body{background:#fff}main{margin:0;max-width:none;box-shadow:none;border:none;padding:0}h2,h3{break-after:avoid}.figure,pre,.note,.warning{break-inside:avoid}@page{margin:.65in}}
+</style></head><body><main>
+<div class="eyebrow">Cryptography • Authenticated Encryption</div>
+<h1>CCM — Counter with CBC-MAC</h1>
+<p class="subtitle">How AES-CTR and CBC-MAC work together to protect confidentiality, integrity, and authenticity</p>
+<p class="lead"><strong>CCM</strong> is an <strong>authenticated encryption with associated data (AEAD)</strong> mode. It combines <strong>Counter (CTR) mode</strong>, which encrypts the plaintext, with <strong>CBC-MAC</strong>, which authenticates the plaintext and optional associated data. CCM is standardized in <strong>NIST SP 800-38C</strong>.</p>
+<div class="mini"><div><strong>Confidentiality</strong>CTR mode hides the plaintext.</div><div><strong>Integrity</strong>Authentication detects modifications.</div><div><strong>Authenticity</strong>A valid tag proves knowledge of the secret key.</div></div>
+<h2>1. Inputs and outputs</h2>
+<table><tr><th>Symbol</th><th>Meaning</th></tr><tr><td><code>K</code></td><td>Shared AES key (128, 192, or 256 bits)</td></tr><tr><td><code>N</code></td><td>Unique nonce (7–13 bytes for CCM)</td></tr><tr><td><code>P</code></td><td>Plaintext to encrypt and authenticate</td></tr><tr><td><code>A</code></td><td>Associated data: authenticated but <em>not</em> encrypted (e.g., packet header)</td></tr><tr><td><code>t</code></td><td>Authentication tag length: 4, 6, 8, 10, 12, 14, or 16 bytes</td></tr><tr><td><code>C, U</code></td><td>Encrypted plaintext and transmitted authentication tag</td></tr></table>
+<div class="formula">(K, N, P, A)  →  CCM encryption  →  (C, U)</div>
+<p>The receiver uses <code>K</code>, <code>N</code>, <code>A</code>, <code>C</code>, and <code>U</code> to check integrity and recover <code>P</code> only if authentication succeeds.</p>
+<h2>2. Two operations inside CCM</h2>
+<div class="figure">
+<svg viewBox="0 0 900 365" role="img" aria-label="CCM uses CBC-MAC over formatted nonce, associated data, and plaintext, then CTR encrypts plaintext and masks the tag" xmlns="http://www.w3.org/2000/svg" width="100%">
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6" fill="none" stroke="#506d83" stroke-width="1.5"/></marker></defs>
+<rect x="12" y="12" width="215" height="65" rx="9" fill="#e9f2ff" stroke="#8bb2d9"/><text x="119" y="38" text-anchor="middle" font-size="19" font-weight="700" fill="#184d7f">Inputs</text><text x="119" y="58" text-anchor="middle" font-size="16" fill="#184d7f">K, N, A, P</text>
+<path d="M227 45 H265 V112" stroke="#506d83" stroke-width="2" fill="none" marker-end="url(#arrow)"/><path d="M245 45 V247 H265" stroke="#506d83" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+<rect x="267" y="95" width="285" height="96" rx="10" fill="#e2f5ee" stroke="#6ca98c"/><text x="409" y="128" text-anchor="middle" font-weight="700" font-size="21" fill="#17654e">CBC-MAC</text><text x="409" y="151" text-anchor="middle" font-size="16" fill="#17654e">Authenticate N, A, P</text><text x="409" y="173" text-anchor="middle" font-size="15" fill="#17654e">produces tag T</text>
+<rect x="267" y="216" width="285" height="96" rx="10" fill="#fff0db" stroke="#cfaa70"/><text x="409" y="248" text-anchor="middle" font-weight="700" font-size="21" fill="#7b4e16">Counter (CTR) mode</text><text x="409" y="271" text-anchor="middle" font-size="16" fill="#7b4e16">Encrypt P → C</text><text x="409" y="293" text-anchor="middle" font-size="15" fill="#7b4e16">Mask tag T with S₀ → U</text>
+<path d="M552 143 H635 V200 H671" stroke="#506d83" stroke-width="2" fill="none" marker-end="url(#arrow)"/><path d="M552 264 H635 V222 H671" stroke="#506d83" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+<rect x="673" y="177" width="210" height="68" rx="10" fill="#eae7fb" stroke="#9d92d0"/><text x="778" y="205" text-anchor="middle" font-weight="700" font-size="20" fill="#514b94">Output</text><text x="778" y="228" text-anchor="middle" font-size="16" fill="#514b94">Ciphertext C + Tag U</text>
+<text x="450" y="351" text-anchor="middle" font-size="14" fill="#52677c">Conceptual flow; CCM uses specified formatting and counter blocks.</text>
+</svg><p class="figcaption">CCM is an authenticate-then-encrypt construction: CBC-MAC computes a tag; CTR encrypts the plaintext and masks the tag.</p></div>
+<h2>3. Step 1 — Compute the CBC-MAC</h2>
+<p>CCM creates a precisely formatted series of <strong>128-bit blocks</strong>, starting with a control block <code>B₀</code> that includes flags, the nonce, and plaintext length. Encoded associated data (if present) follows, then the plaintext. The formatting encodes lengths and parameters to avoid the variable-length attacks that affect naive CBC-MAC.</p>
+<div class="formula">B₀ = Flags || N || encode<sub>q</sub>(len(P))<br>X₀ = 0¹²⁸<br>Xᵢ = AES<sub>K</sub>(Xᵢ₋₁ ⊕ Bᵢ₋₁),  for i = 1,…,r+1<br>T = MSB<sub>8t</sub>(X<sub>r+1</sub>)</div>
+<p>Here <code>q = 15 − len(N)</code> bytes are used to represent the plaintext length, and <code>MSB</code> selects the first <code>t</code> bytes. The formatted blocks are <code>B₀ … Bᵣ</code>.</p>
+<h2>4. Step 2 — Encrypt with CTR mode</h2>
+<p>CCM constructs counter blocks <code>A₀, A₁, A₂, …</code> using the same nonce and separate counter values. AES encryption of these blocks creates a keystream:</p>
+<div class="formula">Sᵢ = AES<sub>K</sub>(Aᵢ)<br>Cᵢ = Pᵢ ⊕ Sᵢ,  for i ≥ 1<br>U = T ⊕ MSB<sub>8t</sub>(S₀)</div>
+<p><strong>Important:</strong> Counter block <code>A₀</code> is reserved for masking the MAC tag; payload encryption starts with <code>A₁</code>. For a short final plaintext block, only the needed keystream bytes are used.</p>
+<h2>5. Worked example — How the operations fit together</h2>
+<p>Suppose a device sends a secure control command:</p>
+<pre>Key (K):        128-bit shared AES key
+Nonce (N):      11-byte unique value
+Associated data: Device ID = 42
+Plaintext (P):  "OPEN"
+Tag length:     8 bytes (64 bits)</pre>
+<ol><li>Set <code>q = 15 − 11 = 4</code>; encode the 4-byte plaintext length in <code>B₀</code>.</li><li>Run CBC-MAC over the CCM-formatted control block, associated data, and plaintext to obtain the internal tag <code>T</code>.</li><li>Generate <code>S₁ = AES<sub>K</sub>(A₁)</code>; XOR its first four bytes with <code>OPEN</code> to create four bytes of ciphertext <code>C</code>.</li><li>Compute <code>S₀ = AES<sub>K</sub>(A₀)</code> and mask the 8-byte MAC: <code>U = T XOR first_8_bytes(S₀)</code>.</li><li>Transmit the nonce, ciphertext, and masked tag; provide associated data to the receiver unchanged.</li></ol>
+<div class="note"><strong>Teaching note:</strong> This example illustrates the operations without inventing AES outputs. Actual ciphertext and tag bytes depend on the chosen key and nonce.</div>
+<h2>6. Receiver verification</h2>
+<ol><li>Use the nonce and key to regenerate CTR keystream blocks.</li><li>Decrypt the ciphertext to recover a <em>candidate</em> plaintext.</li><li>Recompute CBC-MAC using the candidate plaintext, nonce, and associated data.</li><li>Recompute the expected transmitted tag and compare it securely.</li><li><strong>Release plaintext only if the tag verifies.</strong> Otherwise reject the entire message.</li></ol>
+<div class="warning"><strong>Security rule:</strong> Do not act on unauthenticated plaintext. Implementations must withhold it until tag verification succeeds; a failed check must not leak partially decrypted data.</div>
+<h2>7. Why the nonce matters</h2>
+<p>The nonce is <strong>not a secret</strong>, and it need not be random, but it <strong>must be unique for each encryption with a given key</strong>. Reusing a nonce repeats CTR keystream bytes, allowing an attacker to learn the XOR of two plaintexts, and undermines CCM's security guarantees.</p>
+<div class="formula">C₁ = P₁ ⊕ S, &nbsp; C₂ = P₂ ⊕ S<br>Therefore: C₁ ⊕ C₂ = P₁ ⊕ P₂</div>
+<p>Unique nonces are mandatory even if the messages differ. A nonce alone does not prevent replay: a receiver also needs replay-detection state, such as tracked sequence numbers.</p>
+<h2>8. Associated authenticated data (AAD)</h2>
+<p>AAD is protected against unauthorized modification but remains visible. Examples include packet headers, device identifiers, routing metadata, or protocol fields that must be authenticated without being encrypted.</p>
+<table><tr><th>Data</th><th>Encrypted?</th><th>Authenticated?</th></tr><tr><td>Plaintext payload</td><td>Yes</td><td>Yes</td></tr><tr><td>Associated data (AAD)</td><td>No</td><td>Yes</td></tr><tr><td>Nonce</td><td>No</td><td>Bound into CCM authentication and counter formatting</td></tr></table>
+<h2>9. CCM compared with other constructions</h2>
+<table><tr><th>Method</th><th>Confidentiality</th><th>Authentication</th><th>Comments</th></tr><tr><td>CBC-MAC</td><td>No</td><td>Yes</td><td>Basic form requires fixed-length messages or proper length binding.</td></tr><tr><td>CMAC</td><td>No</td><td>Yes</td><td>Block-cipher MAC suitable for variable-length messages.</td></tr><tr><td>HMAC</td><td>No</td><td>Yes</td><td>Keyed construction based on a hash function.</td></tr><tr><td><strong>CCM</strong></td><td><strong>Yes</strong></td><td><strong>Yes</strong></td><td>CTR encryption + formatted CBC-MAC authentication; AEAD.</td></tr><tr><td>GCM</td><td>Yes</td><td>Yes</td><td>CTR encryption + Galois-field authentication; AEAD.</td></tr></table>
+<h2>10. Python example (AES-CCM)</h2>
+<p>The following example uses a tested library implementation rather than implementing CCM's block formatting manually.</p>
+<pre>from cryptography.hazmat.primitives.ciphers.aead import AESCCM
+import os
+
+key = AESCCM.generate_key(bit_length=128)
+aesccm = AESCCM(key, tag_length=8)
+nonce = os.urandom(11)  # Must never repeat with this key
+plaintext = b"OPEN"
+aad = b"Device ID = 42"
+
+# ciphertext includes the authentication tag at the end
+encrypted = aesccm.encrypt(nonce, plaintext, aad)
+print("Ciphertext + tag:", encrypted.hex())
+
+# Raises InvalidTag if ciphertext, AAD, key or nonce is wrong
+recovered = aesccm.decrypt(nonce, encrypted, aad)
+print("Recovered:", recovered.decode())</pre>
+<p class="small">Install the library with <code>pip install cryptography</code>. This example randomly generates a nonce for a single operation; real applications must enforce nonce uniqueness across all encryptions under the same key, including across process restarts.</p>
+<h2>11. Security considerations</h2>
+<ul><li><strong>Never reuse a nonce with the same key.</strong> Use a robust nonce-management scheme.</li><li><strong>Choose sufficient tag length.</strong> Short tags allow higher forgery probability; the acceptable length depends on protocol limits and threat model.</li><li><strong>Authenticate associated data exactly.</strong> Sender and receiver must use identical AAD bytes.</li><li><strong>Reject failed authentication.</strong> Never process plaintext before verification.</li><li><strong>Prevent replay at the protocol level.</strong> AEAD authentication does not imply freshness.</li><li><strong>Use standard cryptographic libraries.</strong> Do not invent your own CCM formatting or encryption construction.</li></ul>
+<h2>12. Check your understanding</h2>
+<ol><li>What security property does CTR contribute to CCM? What does CBC-MAC contribute?</li><li>Why does CCM include nonce and message-length information in its authentication formatting?</li><li>Why is counter block <code>A₀</code> treated differently from <code>A₁</code>?</li><li>If the AAD is modified in transit, what should occur during decryption?</li><li>Why does CCM require unique nonces even though the nonce can be public?</li><li>Does CCM alone detect replay of a previously valid encrypted packet? Explain.</li></ol>
+<div class="note"><strong>Key takeaway:</strong> <strong>CCM = CBC-MAC authentication + CTR encryption</strong>, carefully combined into one authenticated-encryption mode. It protects the encrypted payload and any associated data, provided nonces are unique and verification is enforced.</div>
+<h2>References</h2>
+<p><a href="https://doi.org/10.6028/NIST.SP.800-38C">NIST SP 800-38C, <em>Recommendation for Block Cipher Modes of Operation: The CCM Mode for Authentication and Confidentiality</em></a><br><a href="https://www.rfc-editor.org/rfc/rfc3610">RFC 3610, <em>Counter with CBC-MAC (CCM)</em></a></p>
+</main></body></html>
